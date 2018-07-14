@@ -67,7 +67,7 @@ class Player(object):
         self._seat = value
 
     def reset_hand(self):
-        self._hand = []
+        self.hand = []
         self.playedthisround = False
         self.betting = 0
         self.isallin = False
