@@ -1,19 +1,11 @@
-# TrendMicro CoreTech Allhands Holdem Competetion Training Tool 
+# TrendMicro CoreTech Allhands Holdem Competetion Training Tool (FRS Modified Ver.)
 
 ## known issue
 + sidepot
 
-## OpenAI Gym
-[OpenAI Gym 官方網址](https://gym.openai.com/docs/)
-> Gym is a toolkit for developing and comparing reinforcement learning algorithms.
-
-> Gym 提供了一個測試 Reinforcement Learning的環境框架, 並且沒有對 Agent做任何假設
-
-另外也可以參考 DeepMind 針對德州撲克的環境[DeepMind Poker](https://github.com/dickreuter/Poker)
-
 ## 此版本介紹
 
-這一個版本是從 [wenkesj/holdem](https://github.com/wenkesj/holdem)改寫，主要多增加了以下功能
+這一個版本是從 [chuchuhao/holdem](https://github.com/chuchuhao/holdem)改寫，主要多增加了以下功能
 + 修改因 openai/gym 在 [commit #836](https://github.com/openai/gym/pull/836) spec change所造成的 crash
 + 新增 `cycle` attribute (發牌一輪為 round, 玩一次為 cycle)
 + 新增 Interface連接 Trend Micro server
@@ -22,9 +14,11 @@
 + 限制每一 round 同一 player raise 次數上限為 4次 (可透過參數修改) (自動改成 CALL)
 + 修改 to_call為 此 round絕對數值
 
-另外有改寫 [ihendley/treys](https://github.com/ihendley/treys)，這一個repo是改寫自 */deuce為提供 poker相關計算與管理
-+ 修改 f-string not supported under python 3.6
-+ 修改 serup.py在 windows paltform造成的 encoding issue (cp950 decode error)
+## 安裝方法
+```sh
+# better run under virtualenv with python 2
+pip install -r requirement.txt
+```
 
 ### 名詞解釋 (這裡 refactor會影響到 interface暫時先不更改)
 1. 局(Episode): 一局遊戲是指參賽的10名玩家進入一張遊戲桌, 持有相等的初始籌碼, 對戰直到本遊戲桌只剩下 不多於半數 玩家勝出, 而其餘玩家因籌碼耗盡而出局為止, 一局由多圈構成
@@ -32,15 +26,6 @@
 3. 輪(CYCLE): 一輪遊戲是指每次荷官重新發公共牌和私有牌, 每個玩家按回合進行決策, 直到除了一名玩家之外全部棄牌, 或者5張公共牌完全翻開為止, 決出本輪勝負並清算籌碼, 一輪由多個回合構成
 4. 回合(ROUND)): 一回合是指所有玩家依次take action, 稱為一回合, 一個回合中有多個(分別來自各個玩家的)action
 5. action(STEP): 一個action是指輪到某一個玩家 call/raise/check/fold/~~bet~~/~~allin~~ 玩家通過 AI 客戶端完成其中一種決策稱之為一個action
-
-## 安裝方法
-```sh
-# better run under virtualenv
-git clone https://github.com/chuchuhao/holdem.git
-pip install gym
-pip install websocket-client
-pip install git+https://github.com/chuchuhao/treys # 若非 windows環境可以直接 pip install treys
-```
 
 ## 使用方法
 - local_example: environment為 gym
@@ -70,7 +55,7 @@ Agent必須為一個 class並且提供下面兩個 method
 
 agent會接到一個由 namedtuple所包成的 state, 包含下列三個項目
 
-0. player_states: 長度為此桌 `seat` 座位數的 Tuple
+1. player_states: 長度為此桌 `seat` 座位數的 Tuple
     + 每一個 item為 player_sates:
         + `emptyplayer`, (boolean), 0 seat is empty, 1 is not 表示這一個位子有沒有玩家註冊
         + `seat`, (number), 玩家的 seat number, seat也是 玩家的初始順序, 過程中不會改變
@@ -84,7 +69,7 @@ agent會接到一個由 namedtuple所包成的 state, 包含下列三個項目
         + `reloadCount`, (number), <ONLY TM USED> 在 openai/gym中沒有適用到 reload功能
         + `hand`, (list(2)), 長度為 2的<IN TREYS FORMAT> 必須使用 TREYS提供的 API解讀
 
-1. community_state: 這裡所提到的 id = seat number
+2. community_state: 這裡所提到的 id = seat number
     + `button`, (number), the id of bigblind 莊家位置 (順序: 莊家> 小盲 > 大盲)
     + `smallblind`, (number), the current small blind amount 小盲注籌碼數
     + `bigblind`, (number), the current big blind amount  大盲注籌碼數
