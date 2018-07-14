@@ -3,7 +3,7 @@ from enum import Enum
 from holdem import PLAYER_STATE, COMMUNITY_STATE, STATE, ACTION, action_table, card_to_normal_str
 import random
 
-from treys import Evaluator
+from deuces import Evaluator
 import numpy as np
 # from keras.models import Sequential
 # from keras.layers import Dense

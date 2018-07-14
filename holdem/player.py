@@ -24,7 +24,7 @@ from random import randint
 
 from gym import error
 
-from treys import Card
+from deuces import Card
 
 
 class Player(object):

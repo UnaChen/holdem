@@ -6,7 +6,7 @@ from websocket._exceptions import WebSocketConnectionClosedException
 import hashlib
 from .utils import hand_to_str, format_action, PLAYER_STATE, COMMUNITY_STATE, STATE, ACTION, action_table, card_str_to_list
 from .player import Player
-from treys import Card, Deck, Evaluator
+from deuces import Card, Deck, Evaluator
 
 ACCEPTED_ACTION = ["bet", "call", "raise", "check", "fold", "allin"]
 

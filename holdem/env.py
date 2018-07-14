@@ -23,7 +23,7 @@
 from gym import Env, error, spaces, utils
 from gym.utils import seeding
 
-from treys import Card, Deck, Evaluator
+from deuces import Card, Deck, Evaluator
 
 from .player import Player
 from .utils import hand_to_str, format_action, PLAYER_STATE, COMMUNITY_STATE, STATE
