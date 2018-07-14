@@ -1,3 +1,11 @@
+# FRS Modified Ver.
+
+## 安裝方法
+```sh
+# better run under virtualenv
+pip install -r requirement.txt
+```
+
 # TrendMicro CoreTech Allhands Holdem Competetion Training Tool 
 
 ## known issue
