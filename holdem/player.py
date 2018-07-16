@@ -49,7 +49,6 @@ class Player(object):
 
         # flags for table management
         self.emptyplayer = emptyplayer
-        self.betting = 0
         self.isallin = False
         self.playing_hand = False
         self.playedthisround = False
@@ -69,18 +68,17 @@ class Player(object):
     def reset_hand(self):
         self.hand = []
         self.playedthisround = False
-        self.betting = 0
         self.isallin = False
         self.currentbet = 0
         self.lastsidepot = 0
         self.playing_hand = (self.stack != 0)
 
     def bet(self, bet_size):
+        # bet_size = min(player.stack, player_bet) + player.currentbet
         self.playedthisround = True
-        if not bet_size:
+        if not bet_size: # for check
             return
         self.stack -= (bet_size - self.currentbet)
-        self.betting += (bet_size - self.currentbet)
         self.currentbet = bet_size
         if self.stack == 0:
             self.isallin = True
@@ -89,7 +87,7 @@ class Player(object):
         self.stack += ammount
 
     def player_state(self):
-        return (self.get_seat(), self.stack, self.playing_hand, self.betting, self.player_id)
+        return (self.get_seat(), self.stack, self.playing_hand, self.currentbet, self.player_id)
 
     def reset_stack(self):
         self.stack = self._init_stack
