@@ -113,6 +113,31 @@ class TexasHoldemEnv(Env, utils.EzPickle):
                                          ] * n_seats)
         self.episode_end = False
 
+    def init(self):
+        self._cycle = 0
+        self._blind_index = 0
+        [self._smallblind, self._bigblind] = TexasHoldemEnv.BLIND_INCREMENTS[0]
+
+        self.community = []
+        self._round = 0
+        self._button = 0
+        self._discard = []
+
+        self._side_pots = [0] * self.n_seats
+        self._current_sidepot = 0 # index of _side_pots
+        self._totalpot = 0
+        self._tocall = 0
+        self._lastraise = 0
+
+        
+        self._current_player = None
+        self._last_player = None
+        self._last_actions = None
+        
+        self.episode_end = False
+        self.winning_players = []
+        self.round_holder = -1
+        
     def add_player(self, seat_id, stack=1000):
         """Add a player to the environment seat with the given stack (chipcount)"""
         player_id = seat_id
@@ -142,6 +167,12 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         return [seed]
 
     def reset(self):
+        self.init()
+        for player in self._seats:
+            player.reset_stack()
+            player.sitting_out = True
+
+    def new_cycle(self):
         self._reset_game()
         self._ready_players()
         self._cycle += 1

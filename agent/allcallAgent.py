@@ -21,6 +21,12 @@ class allCallModel():
     def loadModel(self, path):
         return
 
+    def endCycle(self, states):
+        pass
+
+    def showAction(self, actions):
+        pass
+
     def takeAction(self, state, playerid):
         ''' (Predict/ Policy) Select Action under state'''
         if state.community_state.to_call == 0:
