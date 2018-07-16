@@ -120,7 +120,7 @@ class Player(object):
                     return ('check', 0)
                 if raise_amount > self.stack:
                     # raise error.Error('raise must be less than maxraise {}'.format(self.stack))
-                    return ('check', 0)
+                    return ('raise', self.stack)
                 move_tuple = ('raise', raise_amount)
                 self._roundRaiseCount += 1
             elif action_idx == Player.CHECK:
@@ -136,7 +136,7 @@ class Player(object):
                     return ('call', tocall)
                 if raise_amount > self.stack:
                     # raise error.Error('raise must be less than maxraise {}'.format(self.stack))
-                    return ('call', tocall)
+                    return ('raise', self.stack)
                 move_tuple = ('raise', raise_amount)
             elif action_idx == Player.CALL:
                 move_tuple = ('call', tocall)
