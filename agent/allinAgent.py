@@ -20,7 +20,12 @@ class allinModel():
 
     def loadModel(self, path):
         return
-
+    def showAction(self, action):
+        return
+    def endCycle(self, states):
+        for s in states:
+            print(s.hand)
+            
     def takeAction(self, state, playerid):
         ''' (Predict/ Policy) Select Action under state'''
         return ACTION(action_table.RAISE, state.player_states[playerid].stack)
