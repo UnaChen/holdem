@@ -113,11 +113,14 @@ class Player(object):
             assert action_idx in [Player.CHECK, Player.RAISE]
             if action_idx == Player.RAISE:
                 if self._roundRaiseCount > self._roundRaiseLimit:
-                    raise error.Error('raise times ({}) in this round had exceed limitation ({})'.format(self._roundRaiseCount, self._roundRaiseLimit))
+                    # raise error.Error('raise times ({}) in this round had exceed limitation ({})'.format(self._roundRaiseCount, self._roundRaiseLimit))
+                    return ('check', 0)
                 if raise_amount < minraise:
-                    raise error.Error('raise must be greater than minraise {}'.format(minraise))
+                    # raise error.Error('raise must be greater than minraise {}'.format(minraise))
+                    return ('check', 0)
                 if raise_amount > self.stack:
-                    raise error.Error('raise must be less than maxraise {}'.format(self.stack))
+                    # raise error.Error('raise must be less than maxraise {}'.format(self.stack))
+                    return ('check', 0)
                 move_tuple = ('raise', raise_amount)
                 self._roundRaiseCount += 1
             elif action_idx == Player.CHECK:
@@ -129,9 +132,11 @@ class Player(object):
                 raise error.Error('invalid action ({}) must be raise (2), call (1), or fold (3)'.format(action_idx))
             if action_idx == Player.RAISE:
                 if raise_amount < minraise:
-                    raise error.Error('raise must be greater than minraise {} but {}'.format(minraise, raise_amount))
+                    # raise error.Error('raise must be greater than minraise {} but {}'.format(minraise, raise_amount))
+                    return ('call', tocall)
                 if raise_amount > self.stack:
-                    raise error.Error('raise must be less than maxraise {}'.format(self.stack))
+                    # raise error.Error('raise must be less than maxraise {}'.format(self.stack))
+                    return ('call', tocall)
                 move_tuple = ('raise', raise_amount)
             elif action_idx == Player.CALL:
                 move_tuple = ('call', tocall)
