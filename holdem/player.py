@@ -124,22 +124,26 @@ class Player(object):
             elif action_idx == Player.CHECK:
                 move_tuple = ('check', 0)
             else:
-                raise error.Error('invalid action ({}) must be check (0) or raise (2)'.format(action_idx))
+                # raise error.Error('invalid action ({}) must be check (0) or raise (2)'.format(action_idx))
+                move_tuple = ('check', 0)
         else:
-            if action_idx not in [Player.RAISE, Player.CALL, Player.FOLD]:
-                raise error.Error('invalid action ({}) must be raise (2), call (1), or fold (3)'.format(action_idx))
             if action_idx == Player.RAISE:
+                if self._roundRaiseCount > self._roundRaiseLimit:
+                    # raise error.Error('raise times ({}) in this round had exceed limitation ({})'.format(self._roundRaiseCount, self._roundRaiseLimit))
+                    return ('call', tocall)
                 if raise_amount < minraise:
                     # raise error.Error('raise must be greater than minraise {} but {}'.format(minraise, raise_amount))
                     return ('call', tocall)
                 if raise_amount > self.stack:
                     # raise error.Error('raise must be less than maxraise {}'.format(self.stack))
-                    return ('raise', self.stack)
+                    return ('raise', tocall)
                 move_tuple = ('raise', raise_amount)
+                self._roundRaiseCount += 1
             elif action_idx == Player.CALL:
                 move_tuple = ('call', tocall)
             elif action_idx == Player.FOLD:
                 move_tuple = ('fold', -1)
             else:
-                raise error.Error('invalid action ({}) must be raise (2), call (1), or fold (3)'.format(action_idx))
+                # raise error.Error('invalid action ({}) must be raise (2), call (1), or fold (3)'.format(action_idx))
+                return ('call', tocall)
         return move_tuple
