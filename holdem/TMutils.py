@@ -4,7 +4,8 @@ import json
 from websocket import create_connection
 from websocket._exceptions import WebSocketConnectionClosedException
 import hashlib
-from .utils import hand_to_str, format_action, PLAYER_STATE, COMMUNITY_STATE, STATE, ACTION, action_table, card_str_to_list
+from .utils import hand_to_str, format_action, PLAYER_STATE, COMMUNITY_STATE, STATE, ACTION, action_table, \
+    card_str_to_list
 from .player import Player
 from deuces import Card, Deck, Evaluator
 
@@ -57,14 +58,15 @@ class ClientPlayer():
         self.emptyseats = self.n_seats
 
         self._side_pots = [0] * self.n_seats
-        self._seats = self._seats = [Player(i, stack=0, emptyplayer=True) for i in range(self.n_seats)]
+        self._seats = [Player(i, stack=0, emptyplayer=True) for i in range(self.n_seats)]
         self._player_dict = {}
         self._current_player = None
 
     def _add_player(self, seat_id, init_stack, init_name, reloadCount):
         player_id = seat_id
         if player_id not in self._player_dict:
-            new_player = Player(player_id, stack=init_stack, emptyplayer=False, playername=init_name, reloadCount=reloadCount)
+            new_player = Player(player_id, stack=init_stack, emptyplayer=False, playername=init_name,
+                                reloadCount=reloadCount)
             if self._seats[player_id].emptyplayer:
                 self._seats[player_id] = new_player
                 new_player.set_seat(player_id)
@@ -124,7 +126,7 @@ class ClientPlayer():
         print('-' + hand_to_str(state.community_card, mode))
         print('players:')
         for idx, playerstate in enumerate(state.player_states):
-            if playerstate.emptyplayer == False:
+            if not playerstate.emptyplayer:
                 print('{}{}stack: {}'.format(idx, hand_to_str(playerstate.hand, mode), self._seats[idx].stack))
         print("<<<")
 
@@ -175,7 +177,7 @@ class ClientPlayer():
             self.ws.send(json.dumps({
                 "eventName": "__action",
                 "data": {
-                    "action" : "check"
+                    "action": "check"
                 }
             }))
         elif model_action.action == action_table.RAISE:
@@ -207,12 +209,12 @@ class ClientPlayer():
         total_bet = min(player.stack, player_bet) + player.currentbet
         self._totalpot += (total_bet - player.currentbet)
 
-        player.bet(total_bet) #  update acumulative bet (not add another bet)
+        player.bet(total_bet)  # update acumulative bet (not add another bet)
 
         self._tocall = max(self._tocall, total_bet)
         if self._tocall > 0:
             self._tocall = max(self._tocall, self._bigblind)
-        self._lastraise = max(self._lastraise, total_bet  - self._lastraise)
+        self._lastraise = max(self._lastraise, total_bet - self._lastraise)
 
     def _handle_event(self, msg, data):
         if self._debug:
@@ -225,7 +227,7 @@ class ClientPlayer():
         elif msg == "__game_prepare":
             return False
         elif msg == "__new_round":
-            # No avtion, update state
+            # No action, update state
             self._tocall = 0
             self._lastraise = 0
 
@@ -272,39 +274,38 @@ class ClientPlayer():
                 player_info.playedthisround = False
                 player_info.stack = p["chips"]
                 player_info.playing_hand = not p["folded"]
-                player_info.isallin=p["allIn"]
-                player_info.sitting_out=not p["isSurvive"]
-                player_info.reloadCount=p["reloadCount"]
+                player_info.isallin = p["allIn"]
+                player_info.sitting_out = not p["isSurvive"]
+                player_info.reloadCount = p["reloadCount"]
                 player_info.betting = p["bet"]
-                player_info.currentbet = 0 # p["roundBet"]
+                player_info.currentbet = 0  # p["roundBet"]
                 try:
                     if len(p["cards"]) == 2:
-                        p_card = [card_str_to_list(p["cards"][0]),card_str_to_list(p["cards"][1])]
+                        p_card = [card_str_to_list(p["cards"][0]), card_str_to_list(p["cards"][1])]
                     else:
                         p_card = [-1, -1]
                 except KeyError:
                     p_card = [-1, -1]
-                    pass
                 player_info.hand = p_card
 
             return False
 
-        elif msg == "__start_reload": # Might Action
+        elif msg == "__start_reload":  # Might Action
             for p in data["players"]:
                 i = self.__getPlayerSeatByName(p["playerName"])
                 player_info = self._player_dict[i]
                 player_info.stack = p["chips"]
                 player_info.playing_hand = not p["folded"]
-                player_info.isallin=p["allIn"]
-                player_info.sitting_out=not p["isSurvive"]
-                player_info.reloadCount=p["reloadCount"]
+                player_info.isallin = p["allIn"]
+                player_info.sitting_out = not p["isSurvive"]
+                player_info.reloadCount = p["reloadCount"]
 
             self._tableNumber = data["tableNumber"]
             if self._model.getReload(self.get_current_state()):
                 self._send_get_reload()
-            return False # not interesting
+            return False  # not interesting
 
-        elif msg == "__deal": # No Action
+        elif msg == "__deal":  # No Action
             # Update player_states
             self._new_round()
 
@@ -314,14 +315,14 @@ class ClientPlayer():
                 player_info.playedthisround = False
                 player_info.stack = p["chips"]
                 player_info.playing_hand = not p["folded"]
-                player_info.isallin=p["allIn"]
-                player_info.sitting_out=not p["isSurvive"]
-                player_info.reloadCount=p["reloadCount"]
+                player_info.isallin = p["allIn"]
+                player_info.sitting_out = not p["isSurvive"]
+                player_info.reloadCount = p["reloadCount"]
                 player_info.betting = p["bet"]
-                player_info.currentbet = 0 # p["roundBet"]
+                player_info.currentbet = 0  # p["roundBet"]
                 try:
                     if len(p["cards"]) == 2:
-                        p_card = [card_str_to_list(p["cards"][0]),card_str_to_list(p["cards"][1])]
+                        p_card = [card_str_to_list(p["cards"][0]), card_str_to_list(p["cards"][1])]
                     else:
                         p_card = [-1, -1]
                 except KeyError:
@@ -345,9 +346,9 @@ class ClientPlayer():
             # drop data["table"]["raiseCount"]
             # drop data["table"]["betCount"]
 
-            return False # not interesting
+            return False  # not interesting
 
-        elif msg == "__action" or msg == "__bet": # Must Action
+        elif msg == "__action" or msg == "__bet":  # Must Action
             self._tableNumber = data["tableNumber"]
             my_seat = self.__getPlayerSeatByName(self._name)
             if my_seat == -1:
@@ -362,11 +363,11 @@ class ClientPlayer():
             my_player_info.playedthisround = True
             my_player_info.stack = data["self"]["chips"]
             my_player_info.playing_hand = not data["self"]["folded"]
-            my_player_info.isallin=data["self"]["allIn"]
-            my_player_info.sitting_out=data["self"]["isSurvive"]
+            my_player_info.isallin = data["self"]["allIn"]
+            my_player_info.sitting_out = data["self"]["isSurvive"]
 
-            self_bet = data["self"]["bet"] # money already in pot
-            self_minbet = data["self"]["minBet"] # minimun to call
+            self_bet = data["self"]["bet"]  # money already in pot
+            self_minbet = data["self"]["minBet"]  # minimun to call
 
             for p in data["game"]["players"]:
                 i = self.__getPlayerSeatByName(p["playerName"])
@@ -396,7 +397,7 @@ class ClientPlayer():
             model_action = self._model.takeAction(self.get_current_state(), my_seat)
             self._send_action(model_action)
 
-            self._last_player = my_seat # my_player_info
+            self._last_player = my_seat  # my_player_info
             if model_action.action == action_table.RAISE:
                 self._last_action = "raise"
                 self._player_bet(my_player_info, model_action.amount)
@@ -421,9 +422,9 @@ class ClientPlayer():
             # Update player information and render
             if self._playing_live:
                 self.render(mode='human')
-            return False # not interesting
+            return False  # not interesting
 
-        elif msg == "__show_action": # no Action
+        elif msg == "__show_action":  # no Action
             actioned_id = self.__getPlayerSeatByName(data["action"]["playerName"])
             self._current_player = actioned_id
 
@@ -437,7 +438,8 @@ class ClientPlayer():
             # do some action
             self._last_action = data["action"]["action"]
             self._last_player = actioned_id
-            if data["action"]["action"] == "bet" or data["action"]["action"] == "raise" or data["action"]["action"] == "allin":
+            if data["action"]["action"] == "bet" or data["action"]["action"] == "raise" or data["action"][
+                "action"] == "allin":
                 self._lastraise = data["action"]["amount"]
                 self._player_bet(player_info, data["action"]["amount"])
                 if self._debug:
@@ -461,14 +463,14 @@ class ClientPlayer():
                 player_info = self._player_dict[i]
                 player_info.stack = p["chips"]
                 player_info.playing_hand = not p["folded"]
-                player_info.isallin=p["allIn"]
-                player_info.sitting_out=not p["isSurvive"]
-                player_info.reloadCount=p["reloadCount"]
+                player_info.isallin = p["allIn"]
+                player_info.sitting_out = not p["isSurvive"]
+                player_info.reloadCount = p["reloadCount"]
                 player_info.betting = p["bet"]
-                player_info.currentbet = 0 # p["roundBet"]
+                player_info.currentbet = 0  # p["roundBet"]
                 try:
                     if len(p["cards"]) == 2:
-                        p_card = [card_str_to_list(p["cards"][0]),card_str_to_list(p["cards"][1])]
+                        p_card = [card_str_to_list(p["cards"][0]), card_str_to_list(p["cards"][1])]
                     else:
                         p_card = [-1, -1]
                 except KeyError:
@@ -490,7 +492,7 @@ class ClientPlayer():
             self._smallblind = int(data["table"]["smallBlind"]["amount"])
             self._bigblind = int(data["table"]["bigBlind"]["amount"])
 
-            return False # not interesting
+            return False  # not interesting
 
         elif msg == "__round_end":
             # no reply
@@ -502,14 +504,14 @@ class ClientPlayer():
                 player_info = self._player_dict[i]
                 player_info.stack = p["chips"]
                 player_info.playing_hand = not p["folded"]
-                player_info.isallin=p["allIn"]
-                player_info.sitting_out=not p["isSurvive"]
-                player_info.reloadCount=p["reloadCount"]
+                player_info.isallin = p["allIn"]
+                player_info.sitting_out = not p["isSurvive"]
+                player_info.reloadCount = p["reloadCount"]
                 player_info.betting = p["bet"]
-                player_info.currentbet = 0 # p["roundBet"]
+                player_info.currentbet = 0  # p["roundBet"]
                 try:
                     if len(p["cards"]) == 2:
-                        p_card = [card_str_to_list(p["cards"][0]),card_str_to_list(p["cards"][1])]
+                        p_card = [card_str_to_list(p["cards"][0]), card_str_to_list(p["cards"][1])]
                     else:
                         p_card = [-1, -1]
                 except KeyError:
@@ -522,12 +524,12 @@ class ClientPlayer():
                 print("[LIVE] Cycle End")
                 self.render(mode='machine')
             self._reset()
-            return False # not interesting
+            return False  # not interesting
 
         elif msg == "__game_over":
             if self._debug:
-                print("[DEBUG] {} {} ". format(msg, data))
-            return True # not interesting
+                print("[DEBUG] {} {} ".format(msg, data))
+            return True  # not interesting
 
         else:
             print("[Error] Unknown Event message [{}]".format(msg))
@@ -538,7 +540,7 @@ class ClientPlayer():
             self.ws = create_connection(self._server_uri)
             self.ws.send(json.dumps({
                 "eventName": "__join",
-                "data" : {
+                "data": {
                     "playerName": self._nick_name
                 }
             }))
@@ -558,7 +560,6 @@ class ClientPlayer():
                 self.ws.close()
             except WebSocketConnectionClosedException:
                 print("[ERROR] WebSocketConnectionClosedException, ignore")
-                pass
-        except IOError as e: # TODO: find better way to handle exception
+        except IOError as e:  # TODO: find better way to handle exception
             print("[ERROR] Failed to doListern(): ", str(e))
             self.doListen()
