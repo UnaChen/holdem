@@ -11,11 +11,6 @@ from deuces import Card, Deck, Evaluator
 
 ACCEPTED_ACTION = ["bet", "call", "raise", "check", "fold", "allin"]
 
-def listen_to_state():
-    return
-
-def packed_action():
-    return
 
 class ClientPlayer():
     def __init__(self, server_uri, name, model, debug=False, playing_live=False):
@@ -30,7 +25,6 @@ class ClientPlayer():
 
         # model setting
         self._model = model
-        self._room_id = "217" # tableNumber
 
         # community_information
         self._round = 0
@@ -44,9 +38,7 @@ class ClientPlayer():
         self._evaluator = Evaluator()
 
         self.community = []
-        self._discard = [] # Not used here, can not get the informatiom
 
-        self._current_sidepot = 0  # index of _side_pots
         self._totalpot = 0
         self._tocall = 0
         self._lastraise = 0
@@ -116,7 +108,7 @@ class ClientPlayer():
         )
         return STATE(tuple(player_states), community_states, self._pad(self.community, 5, -1))
 
-    def render(self, mode='human', close=False):
+    def render(self, mode='human'):
         print('Cycle {}, total pot: {} >>>'.format(self._cycle, self._totalpot))
         if self._last_action is not None:
             print('last action by player {} with action {}'.format(self._last_player, self._last_action))
@@ -327,7 +319,6 @@ class ClientPlayer():
                         p_card = [-1, -1]
                 except KeyError:
                     p_card = [-1, -1]
-                    pass
                 player_info.hand = p_card
 
             # Update Community_state
