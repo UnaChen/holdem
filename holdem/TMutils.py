@@ -199,7 +199,7 @@ class ClientPlayer():
     def _player_bet(self, player, player_bet):
         # relative_bet = bet on this round, not accumulative
         total_bet = min(player.stack, player_bet) + player.currentbet
-        self._totalpot += (total_bet - player.currentbet)
+        self._totalpot += min(player.stack, player_bet)
 
         player.bet(total_bet)  # update acumulative bet (not add another bet)
 
@@ -522,6 +522,9 @@ class ClientPlayer():
             if self._debug:
                 print("[DEBUG] {} {} ".format(msg, data))
             return True  # not interesting
+
+        elif msg == "__pairing":
+            return False
 
         else:
             print("[Error] Unknown Event message [{}]".format(msg))
