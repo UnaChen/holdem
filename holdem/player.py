@@ -74,14 +74,17 @@ class Player(object):
         self.playing_hand = (self.stack != 0)
 
     def bet(self, bet_size):
+        # not for bigblind, smallblind 
         # bet_size = min(player.stack, player_bet) + player.currentbet
         self.playedthisround = True
         if not bet_size: # for check
             return
-        self.stack -= (bet_size - self.currentbet)
-        self.currentbet = bet_size
-        if self.stack == 0:
+        actualbet = bet_size - self.currentbet
+        if self.stack <= actualbet:
+            actualbet = self.stack
             self.isallin = True
+        self.stack -= actualbet
+        self.currentbet += actualbet
 
     def refund(self, ammount):
         self.stack += ammount
