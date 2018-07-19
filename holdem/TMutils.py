@@ -134,14 +134,14 @@ class ClientPlayer():
         self._last_action = None
         self._cycle += 1
 
-    def __roundNameToRound(self, rounName):
-        if "Deal":
+    def __roundNameToRound(self, roundName):
+        if roundName == "Deal":
             return 0
-        elif "Flop":
+        elif roundName == "Flop":
             return 1
-        elif "Turn":
+        elif roundName == "Turn":
             return 2
-        elif "River":
+        elif roundName == "River":
             return 3
 
     def _new_round(self):
@@ -356,6 +356,7 @@ class ClientPlayer():
             my_player_info.playing_hand = not data["self"]["folded"]
             my_player_info.isallin = data["self"]["allIn"]
             my_player_info.sitting_out = data["self"]["isSurvive"]
+            my_player_info.hand = p_card
 
             self_bet = data["self"]["bet"]  # money already in pot
             self_minbet = data["self"]["minBet"]  # minimun to call
@@ -436,7 +437,7 @@ class ClientPlayer():
                 if self._debug:
                     print('[DEBUG] Player', self._current_player, data["action"]["action"], data["action"]["amount"])
             elif data["action"]["action"] == "check":
-                self._player_bet(player_info, data["action"]["amount"])
+                self._player_bet(player_info, 0)
                 if self._debug:
                     print('[DEBUG] Player', self._current_player, "check", data["action"]["amount"])
             elif data["action"]["action"] == "call":
