@@ -61,7 +61,7 @@ class Memory:
         self.currentPosition += 1
 
 
-class DeepQ:
+class DeepQ(object):
     """ 
     DQN abstraction.
         Traditional Q-learning:

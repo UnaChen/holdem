@@ -56,7 +56,6 @@ class udqnModel():
         outputSize = len(self.actionTrain)
 
         self.deepQ = DeepQTrain(inputSize, outputSize, player_name)
-        self.deepQ.loadModel()
 
         self._reset()
 
