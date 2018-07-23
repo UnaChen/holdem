@@ -226,10 +226,11 @@ class DeepQ:
             self.model.fit(X_batch, Y_batch, batch_size=len(miniBatch), nb_epoch=1, verbose=0)
 
 
-class DeepQTrain:
+class DeepQTrain(DeepQ):
     def __init__(self, inputSize, outputSize, player_name):
+        
         self.stepCounter = 0
-        self.updateTargetNetwork = 1000 # 10000
+        self.updateTargetNetworkCounter = 1000 # 10000
         self.explorationRate = 0.9
         self.minibatch_size = 128
         self.learnStart = 128
@@ -237,30 +238,27 @@ class DeepQTrain:
         discountFactor = 0.99
         memorySize = 10000 # 1000000
 
-        self.deepQ = DeepQ(inputSize, outputSize, memorySize, discountFactor, learningRate, \
+        super(DeepQTrain, self).__init__(inputSize, outputSize, memorySize, discountFactor, learningRate, \
             self.learnStart, player_name)
-        if self.deepQ.modelExisted():
-            self.deepQ.loadModel()
-        else:
-            self.deepQ.initNetworks([30, 30])
 
+        if self.modelExisted():
+            self.loadModel()
+        else:
+            self.initNetworks([30, 30])
         self._reset()
-        
-    def saveModel(self):  
-        self.deepQ.saveModel()
 
     def _learnOnMinBatch(self):
         if self.stepCounter >= self.learnStart:
-            if self.stepCounter <= self.updateTargetNetwork:
-                self.deepQ.learnOnMiniBatch(self.minibatch_size, False)
+            if self.stepCounter <= self.updateTargetNetworkCounter:
+                self.learnOnMiniBatch(self.minibatch_size, False)
                 # print "[INFO] Learn Start <= UpdateTargetNetwork"
             else:
-                self.deepQ.learnOnMiniBatch(self.minibatch_size, True)
+                self.learnOnMiniBatch(self.minibatch_size, True)
                 # print "[INFO] Learn Start > UpdateTargetNetwork"
 
     def _updateTargetNetwork(self):
-        if self.stepCounter % self.updateTargetNetwork == 0:
-            self.deepQ.updateTargetNetwork()
+        if self.stepCounter % self.updateTargetNetworkCounter == 0:
+            self.updateTargetNetwork()
             print "[INFO] Update Target Network"
 
     def _reset(self):
@@ -270,16 +268,14 @@ class DeepQTrain:
 
     def addMemoryUDQN(self, data):
         # action, reward, state, done
-        state, reward, done = data['state'], data['reward'], data['done']
-        winRate, remain, invest, pot = state
-        state = [winRate]
+        state, reward, done = data['state'], data['reward'], data['done']        
         
         if self.observation is None:
             self.observation = np.array(state)
         else:
             self.newObservation = np.array(state)
    
-            self.deepQ.addMemory(self.observation, self.action, reward, \
+            self.addMemory(self.observation, self.action, reward, \
                 self.newObservation, done)
             self.observation = self.newObservation
 
