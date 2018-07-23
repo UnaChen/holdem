@@ -502,7 +502,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
                 int(player.playing_hand),
                 int(player.handrank),
                 int(player.playedthisround),
-                int(player.betting),
+                int(player.currentbet),
                 int(player.isallin),
                 int(player.lastsidepot),
                 0,
