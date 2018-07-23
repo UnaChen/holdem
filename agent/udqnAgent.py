@@ -1,19 +1,12 @@
-import json
-import sys
 import numpy as np
 import time
-import pandas as pd
-import os
 
 from utils.dqn import DeepQTrain
 from utils.montecargo import MonteCargo
 
-from collections import namedtuple
-from enum import Enum
-from holdem import PLAYER_STATE, COMMUNITY_STATE, STATE, ACTION, action_table, card_to_normal_str
-import random
+from holdem import ACTION, action_table, card_to_normal_str
 
-class uDqnModel():
+class udqnModel():
     def __init__(self):
         # self.reload_left = 2
         self.model = {"seed":831}
