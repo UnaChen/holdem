@@ -25,7 +25,7 @@ class allinModel():
         return
 
     def endCycle(self, states):
-        for s in states:
+        for s in states.player_states:
             print(s.hand)
             
     def takeAction(self, state, playerid):

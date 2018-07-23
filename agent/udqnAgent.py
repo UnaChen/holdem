@@ -27,8 +27,8 @@ class udqnModel():
 
     def endCycle(self, states):
         observation = self._getObservation(states)
-        stack = states.player_state[self.playerid].stack
-        betting = states.player_state[self.playerid].betting        
+        stack = states.player_states[self.playerid].stack
+        betting = states.player_states[self.playerid].betting
         reward = (stack - betting) / self.BB
         self._addMemory(observation, None, reward, True)
 
@@ -38,7 +38,8 @@ class udqnModel():
     def takeAction(self, state, playerid):
         ''' (Predict/ Policy) Select Action under state'''
         self.playerid = playerid
-        return ACTION(self._doAction(state))
+        actionID, amount = self._doAction(state)
+        return ACTION(actionID, amount)
 
     def getReload(self, state):
         pass
@@ -83,20 +84,19 @@ class udqnModel():
 
     def _getObservation(self, state):
         # [monteCarlo, remainChips, investChips, pot]        
-        cards = state.player_state[self.playerid].hand
-        boards = [ card_to_normal_str(c).upper() for c in state.community_card]
+        cards = [ card_to_normal_str(c).upper() for c in state.player_states[self.playerid].hand]
+        boards = [ card_to_normal_str(c).upper() for c in state.community_card if c != -1]
         
-        self.playerCount = len([p for p in state.player_state if p.playing_hand])
+        self.playerCount = len([p for p in state.player_states if p.playing_hand])
         start = time.time()
         self.winRate = self.monteCarlo.calc_win_rate(cards, boards, self.playerCount, self.montecarloTimes)
 
-        remainChips = state.player_state[self.playerid].stack / self.BB
-        investChips = state.player_state[self.playerid].betting / self.BB
+        remainChips = state.player_states[self.playerid].stack / self.BB
+        investChips = state.player_states[self.playerid].betting / self.BB
         pot = state.community_state.totalpot / self.BB
         state = [self.winRate, remainChips, investChips, pot]
 
-        print 'time_getObs',(time.time() - start)
-        print state
+        print 'time_getObs',(time.time() - start), state
         return np.array(state)
 
     def _addMemory(self, state, actionID, reward, done):
