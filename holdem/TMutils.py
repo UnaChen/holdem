@@ -521,6 +521,8 @@ class ClientPlayer():
         elif msg == "__game_over":
             if self._debug:
                 print("[DEBUG] {} {} ".format(msg, data))
+            # Reset all for a new game
+            self._seats = [Player(i, stack=0, emptyplayer=True) for i in range(self.n_seats)]
             return True  # not interesting
 
         elif msg == "__pairing":
@@ -547,8 +549,8 @@ class ClientPlayer():
                     print("[DEBUG] recv: {}".format(result))
                 msg = json.loads(result)
                 terminal = self._handle_event(msg["eventName"], msg["data"])
-                if terminal:
-                    break
+                # if terminal:
+                #     break
 
             print("[Message] Game Over")
             try:
