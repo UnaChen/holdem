@@ -11,6 +11,9 @@ from keras.regularizers import l2
 from keras.models import load_model
 import os
 
+# Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
+
 class Memory:
     """
     This class provides an abstraction to store the [s, a, r, a'] elements of each iteration.
