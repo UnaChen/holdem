@@ -26,11 +26,12 @@ class udqnModel():
         return
 
     def endCycle(self, states):
-        observation = self._getObservation(states)
-        stack = states.player_states[self.playerid].stack
-        betting = states.player_states[self.playerid].betting
-        reward = (stack - betting) / self.BB
-        self._addMemory(observation, None, reward, True)
+        if states.player_states[self.playerid].playing_hand:
+            observation = self._getObservation(states)
+            stack = states.player_states[self.playerid].stack
+            betting = states.player_states[self.playerid].betting
+            reward = (stack - betting) / self.BB
+            self._addMemory(observation, None, reward, True)
 
     def showAction(self, actions):
         pass
@@ -96,7 +97,7 @@ class udqnModel():
         pot = state.community_state.totalpot / self.BB
         state = [self.winRate, remainChips, investChips, pot]
 
-        print 'time_getObs',(time.time() - start), state
+        print 'time_getObs',(time.time() - start), state, self.playerid
         return np.array(state)
 
     def _addMemory(self, state, actionID, reward, done):

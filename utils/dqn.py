@@ -1,3 +1,4 @@
+# refer to https://github.com/vmayoral/basic_reinforcement_learning/blob/master/tutorial5/dqn-mountaincar.py
 # import logging
 # logging.basicConfig(level=logging.INFO)
 import random
@@ -12,7 +13,7 @@ from keras.models import load_model
 import os
 
 # Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 class Memory:
     """
@@ -100,10 +101,10 @@ class DeepQ(object):
     def createModel(self, inputs, outputs, hiddenLayers, activationType, learningRate):
         model = Sequential()
         if len(hiddenLayers) == 0:
-            model.add(Dense(self.output_size, input_shape=(self.input_size,), init='lecun_uniform'))
+            model.add(Dense(self.output_size, input_shape=(self.input_size,), kernel_initializer='lecun_uniform'))
             model.add(Activation("linear"))
         else:
-            model.add(Dense(hiddenLayers[0], input_shape=(self.input_size,), init='lecun_uniform'))
+            model.add(Dense(hiddenLayers[0], input_shape=(self.input_size,), kernel_initializer='lecun_uniform'))
             if (activationType == "LeakyReLU"):
                 model.add(LeakyReLU(alpha=0.01))
             else:
@@ -112,12 +113,12 @@ class DeepQ(object):
             for index in range(1, len(hiddenLayers)):
                 # print("adding layer "+str(index))
                 layerSize = hiddenLayers[index]
-                model.add(Dense(layerSize, init='lecun_uniform'))
+                model.add(Dense(layerSize, kernel_initializer='lecun_uniform'))
                 if (activationType == "LeakyReLU"):
                     model.add(LeakyReLU(alpha=0.01))
                 else:
                     model.add(Activation(activationType))
-            model.add(Dense(self.output_size, init='lecun_uniform'))
+            model.add(Dense(self.output_size, kernel_initializer='lecun_uniform'))
             model.add(Activation("linear"))
         optimizer = optimizers.RMSprop(lr=learningRate, rho=0.9, epsilon=1e-06)
         model.compile(loss="mse", optimizer=optimizer)
@@ -226,7 +227,7 @@ class DeepQ(object):
                 if isFinal:
                     X_batch = np.append(X_batch, np.array([newState.copy()]), axis=0)
                     Y_batch = np.append(Y_batch, np.array([[reward] * self.output_size]), axis=0)
-            self.model.fit(X_batch, Y_batch, batch_size=len(miniBatch), nb_epoch=1, verbose=0)
+            self.model.fit(X_batch, Y_batch, batch_size=len(miniBatch), epochs=1, verbose=0)
 
 
 class DeepQTrain(DeepQ):
