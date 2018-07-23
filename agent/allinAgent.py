@@ -25,8 +25,9 @@ class allinModel():
         return
 
     def endCycle(self, states):
-        for s in states.player_states:
-            print(s.hand)
+        # for s in states.player_states:
+        #     print(s.hand)
+        pass
             
     def takeAction(self, state, playerid):
         ''' (Predict/ Policy) Select Action under state'''
