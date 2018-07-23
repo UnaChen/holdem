@@ -11,7 +11,6 @@ from keras.regularizers import l2
 from keras.models import load_model
 import os
 
-
 class Memory:
     """
     This class provides an abstraction to store the [s, a, r, a'] elements of each iteration.
