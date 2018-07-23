@@ -24,7 +24,7 @@ class allFoldModel():
     def endCycle(self, states):
         pass
 
-    def showAction(self, state, playerid):
+    def showAction(self, actions):
         pass
 
     def takeAction(self, state, playerid):
