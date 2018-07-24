@@ -11,8 +11,6 @@ def lets_play(env, n_seats, model_list):
         if env.episode_end:
             break
 
-
-
         while not cycle_terminal:
             # play safe actions, check when no one else has raised, call when raised.
             # print(">>> Debug Information ")
