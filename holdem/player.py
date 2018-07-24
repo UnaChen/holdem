@@ -102,7 +102,7 @@ class Player(object):
     # cleanup
     def player_move(self, table_state, action):
         self.update_localstate(table_state)
-        # bigblind = table_state.get('bigblind')
+        smallblind = table_state.get('smallblind')
         # tocall = min(table_state.get('tocall', 0), self.stack)
         # minraise = table_state.get('minraise', 0)
         tocall = table_state.get('tocall', 0)
@@ -112,7 +112,7 @@ class Player(object):
         action_idx = int(action_idx)
 
         if tocall == 0:
-            assert action_idx in [Player.CHECK, Player.RAISE]
+            # assert action_idx in [Player.CHECK, Player.RAISE]
             if action_idx == Player.RAISE:
                 if self._roundBetCount > self._roundBetLimit:
                     # raise error.Error('raise times ({}) in this round had exceed limitation ({})'.format(self._roundRaiseCount, self._roundRaiseLimit))
@@ -121,9 +121,11 @@ class Player(object):
                 self._roundBetCount += 1
             elif action_idx == Player.CHECK:
                 move_tuple = ('check', 0)
-            else:
+            elif action_idx == Player.FOLD:
                 # raise error.Error('invalid action ({}) must be check (0) or raise (2)'.format(action_idx))
-                move_tuple = ('check', 0)
+                move_tuple = ('fold', -1)
+            else:
+                return self._call(smallblind)
         else:
             if action_idx == Player.RAISE:
                 if self._roundBetCount > self._roundBetLimit:
