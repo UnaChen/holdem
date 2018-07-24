@@ -22,7 +22,7 @@ class Memory:
     that get returned as another list of dictionaries with each key corresponding to either
     "state", "action", "reward", "nextState" or "isFinal".
     """
-    def __init__(self, size, player_name):
+    def __init__(self, size):
         self.size = size
         self.currentPosition = 0
         self.states = []
@@ -73,7 +73,7 @@ class DeepQ(object):
         DQN:
             target = reward(s,a) + gamma * max(Q(s'))
     """
-    def __init__(self, inputs, outputs, memorySize, discountFactor, learningRate, learnStart, explorationRate, player_name):
+    def __init__(self, inputs, outputs, memorySize, discountFactor, learningRate, learnStart, explorationRate, model_name_prefix):
         """
         Parameters:
             - inputs: input size
@@ -85,11 +85,11 @@ class DeepQ(object):
         """
         self.input_size = inputs
         self.output_size = outputs
-        self.memory = Memory(memorySize, player_name)
+        self.memory = Memory(memorySize)
         self.discountFactor = discountFactor
         self.learnStart = learnStart
         self.learningRate = learningRate
-        self.player_name = player_name
+        self.model_name_prefix = model_name_prefix
         self.explorationRate = explorationRate
 
     def initNetworks(self, hiddenLayers):
@@ -129,17 +129,17 @@ class DeepQ(object):
     def saveModel(self):
         if not os.path.exists('model'):
             os.makedirs('model')
-        self.model.save('model/' + self.player_name + '-dqn_model')
-        self.targetModel.save('model/' + self.player_name + '-dqn_target_model')
+        self.model.save('model/' + self.model_name_prefix + '-dqn_model')
+        self.targetModel.save('model/' + self.model_name_prefix + '-dqn_target_model')
 
     def loadModel(self):
-        print 'load model from', 'model/' + self.player_name + '-dqn_model'
-        self.model = load_model('model/' + self.player_name + '-dqn_model')
-        print 'load model from', 'model/' + self.player_name + '-dqn_target_model'
-        self.targetModel = load_model('model/' + self.player_name + '-dqn_target_model')
+        print 'load model from', 'model/' + self.model_name_prefix + '-dqn_model'
+        self.model = load_model('model/' + self.model_name_prefix + '-dqn_model')
+        print 'load model from', 'model/' + self.model_name_prefix + '-dqn_target_model'
+        self.targetModel = load_model('model/' + self.model_name_prefix + '-dqn_target_model')
 
     def modelExisted(self):
-        if os.path.exists('model/' + self.player_name + '-dqn_model') and os.path.exists('model/' + self.player_name + '-dqn_target_model'):
+        if os.path.exists('model/' + self.model_name_prefix + '-dqn_model') and os.path.exists('model/' + self.model_name_prefix + '-dqn_target_model'):
             return True
         else:
             return False
@@ -232,7 +232,7 @@ class DeepQ(object):
 
 
 class DeepQTrain(DeepQ):
-    def __init__(self, inputSize, outputSize, player_name):
+    def __init__(self, inputSize, outputSize, model_name_prefix):
         
         self.stepCounter = 0
         self.updateTargetNetworkCounter = 1000 # 10000
@@ -244,7 +244,7 @@ class DeepQTrain(DeepQ):
         memorySize = 10000 # 1000000
 
         super(DeepQTrain, self).__init__(inputSize, outputSize, memorySize, discountFactor, learningRate, \
-            self.learnStart, explorationRate, player_name)
+            self.learnStart, explorationRate, model_name_prefix)
 
         if self.modelExisted():
             self.loadModel()
