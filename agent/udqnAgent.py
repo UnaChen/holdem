@@ -7,11 +7,11 @@ from utils.montecargo import MonteCargo
 from holdem import ACTION, action_table, card_to_normal_str
 
 class udqnModel():
-    def __init__(self):
+    def __init__(self, player_name="test"):
         # self.reload_left = 2
         self.model = {"seed":831}
         self.playerid = None
-        self._initDqn()
+        self._initDqn(player_name)
 
     def batchTrainModel(self):
         return
@@ -45,7 +45,7 @@ class udqnModel():
     def getReload(self, state):
         pass
 
-    def _initDqn(self, player_name="test"):
+    def _initDqn(self, player_name):
         self.monteCarlo = MonteCargo()
         self.montecarloTimes = 1000
 
