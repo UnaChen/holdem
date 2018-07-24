@@ -73,7 +73,7 @@ class DeepQ(object):
         DQN:
             target = reward(s,a) + gamma * max(Q(s'))
     """
-    def __init__(self, inputs, outputs, memorySize, discountFactor, learningRate, learnStart, player_name):
+    def __init__(self, inputs, outputs, memorySize, discountFactor, learningRate, learnStart, explorationRate, player_name):
         """
         Parameters:
             - inputs: input size
@@ -90,6 +90,7 @@ class DeepQ(object):
         self.learnStart = learnStart
         self.learningRate = learningRate
         self.player_name = player_name
+        self.explorationRate = explorationRate
 
     def initNetworks(self, hiddenLayers):
         model = self.createModel(self.input_size, self.output_size, hiddenLayers, "relu", self.learningRate)
@@ -188,9 +189,9 @@ class DeepQ(object):
         else:
             return reward + self.discountFactor * self.getMaxQ(qValuesNewState)
 
-    def selectAction(self, qValues, explorationRate):
+    def selectAction(self, qValues):
         rand = random.random()
-        if rand < explorationRate:
+        if rand < self.explorationRate:
             action = np.random.randint(0, self.output_size)
         else:
             action = self.getMaxIndex(qValues)
@@ -235,7 +236,7 @@ class DeepQTrain(DeepQ):
         
         self.stepCounter = 0
         self.updateTargetNetworkCounter = 1000 # 10000
-        self.explorationRate = 0.9
+        explorationRate = 0.9
         self.minibatch_size = 128
         self.learnStart = 128
         learningRate = 0.00025
@@ -243,7 +244,7 @@ class DeepQTrain(DeepQ):
         memorySize = 10000 # 1000000
 
         super(DeepQTrain, self).__init__(inputSize, outputSize, memorySize, discountFactor, learningRate, \
-            self.learnStart, player_name)
+            self.learnStart, explorationRate, player_name)
 
         if self.modelExisted():
             self.loadModel()

@@ -70,7 +70,7 @@ class udqnModel():
 
         observation = self._getObservation(state)
         qValues = self.deepQ.getQValues(observation)
-        actionID = self.deepQ.selectAction(qValues, 0) # 0 = explorationRate
+        actionID = self.deepQ.selectAction(qValues)
         self._addMemory(observation, actionID, 0, False)
 
         actionName = self._transAction(state.community_state.to_call, actionID)        
