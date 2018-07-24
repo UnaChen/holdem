@@ -21,6 +21,12 @@ class allRaiseModel():
     def loadModel(self, path):
         return
 
+    def showAction(self, action):
+        return
+
+    def endCycle(self, states):
+        pass
+
     def takeAction(self, state, playerid):
         ''' (Predict/ Policy) Select Action under state'''
         return ACTION(action_table.RAISE, state.community_state.to_call * 2)
