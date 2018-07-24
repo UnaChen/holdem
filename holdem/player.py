@@ -34,7 +34,7 @@ class Player(object):
     RAISE = 2
     FOLD = 3
 
-    def __init__(self, player_id, stack=1000, emptyplayer=False, playername="", reloadCount=0, roundRaiseLimit=4):
+    def __init__(self, player_id, stack=1000, emptyplayer=False, playername="", reloadCount=0, roundBetLimit=8):
         self.player_id = player_id
         self.playername = playername
 
@@ -53,8 +53,8 @@ class Player(object):
         self.playing_hand = False
         self.playedthisround = False
         self.sitting_out = True
-        self._roundRaiseLimit = roundRaiseLimit
-        self._roundRaiseCount = 0
+        self._roundBetLimit = roundBetLimit
+        self._roundBetCount = 0
 
     def get_name(self):
         return self.playername
@@ -102,28 +102,23 @@ class Player(object):
     # cleanup
     def player_move(self, table_state, action):
         self.update_localstate(table_state)
-        bigblind = table_state.get('bigblind')
-        tocall = min(table_state.get('tocall', 0), self.stack)
-        minraise = table_state.get('minraise', 0)
+        # bigblind = table_state.get('bigblind')
+        # tocall = min(table_state.get('tocall', 0), self.stack)
+        # minraise = table_state.get('minraise', 0)
+        tocall = table_state.get('tocall', 0)
 
-        [action_idx, raise_amount] = action
-        raise_amount = int(raise_amount)
+        [action_idx, bet_amount] = action
+        bet_amount = int(bet_amount)
         action_idx = int(action_idx)
 
         if tocall == 0:
             assert action_idx in [Player.CHECK, Player.RAISE]
             if action_idx == Player.RAISE:
-                if self._roundRaiseCount > self._roundRaiseLimit:
+                if self._roundBetCount > self._roundBetLimit:
                     # raise error.Error('raise times ({}) in this round had exceed limitation ({})'.format(self._roundRaiseCount, self._roundRaiseLimit))
-                    return ('check', 0)
-                if raise_amount < minraise:
-                    # raise error.Error('raise must be greater than minraise {}'.format(minraise))
-                    return ('check', 0)
-                if raise_amount > self.stack:
-                    # raise error.Error('raise must be less than maxraise {}'.format(self.stack))
-                    return ('raise', self.stack)
-                move_tuple = ('raise', raise_amount)
-                self._roundRaiseCount += 1
+                    return self._call(tocall)
+                move_tuple = self._bet(bet_amount, tocall)
+                self._roundBetCount += 1
             elif action_idx == Player.CHECK:
                 move_tuple = ('check', 0)
             else:
@@ -131,22 +126,30 @@ class Player(object):
                 move_tuple = ('check', 0)
         else:
             if action_idx == Player.RAISE:
-                if self._roundRaiseCount > self._roundRaiseLimit:
+                if self._roundBetCount > self._roundBetLimit:
                     # raise error.Error('raise times ({}) in this round had exceed limitation ({})'.format(self._roundRaiseCount, self._roundRaiseLimit))
-                    return ('call', tocall)
-                if raise_amount < minraise:
-                    # raise error.Error('raise must be greater than minraise {} but {}'.format(minraise, raise_amount))
-                    return ('call', tocall)
-                if raise_amount > self.stack:
-                    # raise error.Error('raise must be less than maxraise {}'.format(self.stack))
-                    return ('raise', tocall)
-                move_tuple = ('raise', raise_amount)
-                self._roundRaiseCount += 1
+                    return self._call(tocall)
+                move_tuple = self._bet(bet_amount, tocall)
+                self._roundBetCount += 1
             elif action_idx == Player.CALL:
-                move_tuple = ('call', tocall)
+                move_tuple = self._call(tocall)
             elif action_idx == Player.FOLD:
                 move_tuple = ('fold', -1)
             else:
                 # raise error.Error('invalid action ({}) must be raise (2), call (1), or fold (3)'.format(action_idx))
-                return ('call', tocall)
+                return self._call(tocall)
         return move_tuple
+
+    def _call(self, tocall):
+        if tocall > self.stack:
+            return ('raise', self.stack) # allin
+        else:
+            return ('call', tocall)
+
+    def _bet(self, amount, tocall):
+        if tocall > self.stack or amount > self.stack:
+            return ('raise', self.stack) # allin
+        elif amount < tocall:
+            return ('call', tocall)
+        else:
+            return ('raise', amount)
