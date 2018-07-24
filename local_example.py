@@ -42,7 +42,11 @@ def lets_play(env, n_seats, model_list):
         # if total_stack != 10000:
         #     return
         for m in model_list:
-            m.endCycle(cur_state.player_states)
+            m.endCycle(cur_state)
+
+        print "--------- end cycle ---------"
+        for s in cur_state.player_states:            
+            print( holdem.utils.hand_to_str(s.hand, "human"))
 
         # raw_input("press for next cycle...")
 env = gym.make('TexasHoldem-v2') # holdem.TexasHoldemEnv(2)
@@ -51,7 +55,7 @@ model_list = list()
 
 # start with 4 players
 env.add_player(0, stack=3000) # add a player to seat 0 with 3000 "chips"
-model_list.append(agent.allFoldModel())
+model_list.append(agent.udqnModel())
 
 env.add_player(1, stack=3000) # add another player to seat 1 with 3000 "chips"
 model_list.append(agent.allFoldModel())
