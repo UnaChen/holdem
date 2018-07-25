@@ -24,13 +24,9 @@ class allFoldModel():
     def endCycle(self, states):
         pass
 
-    def showAction(self, state, playerid):
+    def showAction(self, actions):
         pass
 
-    def showAction(self, action):
-        return
-    def endCycle(self, states):
-        pass
     def takeAction(self, state, playerid):
         ''' (Predict/ Policy) Select Action under state'''
         if state.community_state.to_call == 0:
