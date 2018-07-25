@@ -29,7 +29,7 @@ seat, (number or string), when play inside gym, this is a seat id, when connect 
 stack, (number), players current stack (TM's chips)
 playing_hand, (boolean), player is playing current hand (playing current cycle) (1=True, 0=False(not playing)
 handrank, (number), treys.Evaluator.evaluate(hand, community)
-playedthisround, (boolean), whether player is plaed this round (1 cycle has 4 rounds)
+playedthisround, (boolean), whether player is played this round (1 cycle has 4 rounds)
 betting, (number), how much amount players have betting in this cycle
 isallin, (boolean), 0 not all in, 1 all in
 lastsidepot, (numer), resolve when someone all in  <NOT USING NOW>
@@ -46,7 +46,7 @@ lastraise, (number), the last posted raise amount
 call_price, (number), minimum required raise amount, (acuumulate all round)
 to_call, (number), the amount required to call, (current round)
 current_player, (id), the id of current player
-round, (number), the current round (deal, flop, turn, river)
+round, (number, 0-3), the current round 
 '''
 STATE = namedtuple('state', ['player_states', 'community_state', 'community_card'])
 

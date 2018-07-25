@@ -11,8 +11,6 @@ def lets_play(env, n_seats, model_list):
         if env.episode_end:
             break
 
-
-
         while not cycle_terminal:
             # play safe actions, check when no one else has raised, call when raised.
             # print(">>> Debug Information ")
@@ -85,10 +83,8 @@ env.add_player(9, stack=3000) # add another player to seat 3 with 3000 "chips"
 model_list.append(agent.allinModel())
 
 # play out a hand
-try:
-    while True:
-        lets_play(env, env.n_seats, model_list)
-        raw_input("press for next episode...")
-        env.reset()
-except Exception, e:
-    print(e)
+
+while True:
+    lets_play(env, env.n_seats, model_list)
+    raw_input("press for next episode...")
+    env.reset()

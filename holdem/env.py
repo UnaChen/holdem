@@ -192,7 +192,6 @@ class TexasHoldemEnv(Env, utils.EzPickle):
             self._post_bigblind(self._current_player)
             self._current_player = self._next(players, self._current_player)
             self._tocall = self._bigblind
-            self._round = 0
             self._deal_next_round()
             self._folded_players = []
         else:
@@ -277,7 +276,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         return self._get_current_step_returns(terminal)
 
     def render(self, mode='machine', close=False):
-        print('Cycle {}, total pot: {} >>>'.format(self._cycle, self._totalpot))
+        print('Cycle {}, Round {}, total pot: {} >>>'.format(self._cycle, self._round, self._totalpot))
         if self._last_actions is not None:
             pid = self._last_player.player_id
             print('last action by player {}:'.format(pid) + '\t' + format_action(self._last_player, self._last_actions[pid]))
@@ -520,7 +519,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
             int(self._roundpot),
             int(self._tocall - self._current_player.currentbet),
             int(self._current_player.player_id),
-            int(self._round),
+            int(self._round)
         )
         return STATE(tuple(player_states), community_states, self._pad(self.community, 5, -1))
 
