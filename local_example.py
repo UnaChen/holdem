@@ -55,7 +55,7 @@ model_list = list()
 
 # start with 4 players
 env.add_player(0, stack=3000) # add a player to seat 0 with 3000 "chips"
-model_list.append(agent.udqnModel())
+model_list.append(agent.UdqnModel())
 
 env.add_player(1, stack=3000) # add another player to seat 1 with 3000 "chips"
 model_list.append(agent.allFoldModel())

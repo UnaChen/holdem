@@ -5,4 +5,4 @@ from .allfoldAgent import allFoldModel
 from .allcallAgent import allCallModel
 from .allinAgent import allinModel
 from .allraiseAgent import allRaiseModel
-from .udqnAgent import udqnModel
+from .udqnAgent import UdqnModel
