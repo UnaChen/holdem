@@ -6,12 +6,17 @@ from utils.montecargo import MonteCargo
 
 from holdem import ACTION, action_table, card_to_normal_str
 
-class udqnModel():
-    def __init__(self):
+
+class UdqnModel():
+    stateSize = 4  # [monteCarlo, remainChips, investChips, pot]
+    actionTrain = {0: 'FOLD', 1: 'CHECK', 2: 'RAISE*1', 3: 'RAISE*2', 4: 'RAISE*4', 5: 'RAISE*8', \
+                   6: 'RAISE*16', 7: 'RAISE*32', 8: 'RAISE*48', 9: 'RAISE*64', 10: 'RAISE*100'}
+
+    def __init__(self, model_name_prefix="test", deep_q=None):
         # self.reload_left = 2
-        self.model = {"seed":831}
+        self.model = {"seed": 831}
         self.playerid = None
-        self._initDqn()
+        self._initDqn(model_name_prefix, deep_q)
 
     def batchTrainModel(self):
         return
@@ -45,19 +50,24 @@ class udqnModel():
     def getReload(self, state):
         pass
 
-    def _initDqn(self, player_name="test"):
+    def _initDqn(self, model_name_prefix, deep_q):
         self.monteCarlo = MonteCargo()
         self.montecarloTimes = 1000
 
         self.winRate = 0
         self.playerCount = 0
-        self.actionTrain = {0: 'FOLD', 1: 'CHECK', 2:'RAISE*1', 3:'RAISE*2', 4:'RAISE*4', 5:'RAISE*8', \
-            6:'RAISE*16', 7:'RAISE*32', 8:'RAISE*48', 9:'RAISE*64', 10:'RAISE*100'}
 
-        inputSize = 4 # [monteCarlo, remainChips, investChips, pot]
+        inputSize = self.stateSize
         outputSize = len(self.actionTrain)
 
-        self.deepQ = DeepQTrain(inputSize, outputSize, player_name)
+        if deep_q is None:
+            self.deepQ = DeepQTrain(
+                inputSize=inputSize,
+                outputSize=outputSize,
+                model_name_prefix=model_name_prefix
+            )
+        else:
+            self.deepQ = deep_q
 
         self._reset()
 
@@ -70,24 +80,24 @@ class udqnModel():
 
         observation = self._getObservation(state)
         qValues = self.deepQ.getQValues(observation)
-        actionID = self.deepQ.selectAction(qValues, 0) # 0 = explorationRate
+        actionID = self.deepQ.selectAction(qValues)
         self._addMemory(observation, actionID, 0, False)
 
-        actionName = self._transAction(state.community_state.to_call, actionID)        
+        actionName = self._transAction(state.community_state.to_call, actionID)
         if 'RAISE' in actionName:
             betTimes = int(actionName.split('*')[-1])
             if betTimes == 1:
                 return action_table.CALL, state.community_state.to_call
             else:
-                return action_table.RAISE, self.BB*betTimes
+                return action_table.RAISE, self.BB * betTimes
         else:
             return getattr(action_table, actionName), 0
 
     def _getObservation(self, state):
         # [monteCarlo, remainChips, investChips, pot]        
-        cards = [ card_to_normal_str(c).upper() for c in state.player_states[self.playerid].hand]
-        boards = [ card_to_normal_str(c).upper() for c in state.community_card if c != -1]
-        
+        cards = [card_to_normal_str(c).upper() for c in state.player_states[self.playerid].hand]
+        boards = [card_to_normal_str(c).upper() for c in state.community_card if c != -1]
+
         self.playerCount = len([p for p in state.player_states if p.playing_hand])
         start = time.time()
         self.winRate = self.monteCarlo.calc_win_rate(cards, boards, self.playerCount, self.montecarloTimes)
@@ -97,22 +107,22 @@ class udqnModel():
         pot = state.community_state.totalpot / self.BB
         state = [self.winRate, remainChips, investChips, pot]
 
-        print 'time_getObs',(time.time() - start), state, self.playerid
+        print 'time_getObs', (time.time() - start), state, self.playerid
         return np.array(state)
 
     def _addMemory(self, state, actionID, reward, done):
         data = {'state': state, 'action': actionID, 'reward': reward, 'done': done}
         self.deepQ.addMemoryUDQN(data)
-        
+
     def _transAction(self, minBet, actionID):
         actionTrain = self.actionTrain[actionID]
         actionName = actionTrain
 
         if 'FOLD' == actionTrain and minBet == 0:
             actionName = 'CHECK'
-        
+
         if actionTrain != actionName:
-            print '***action:', actionTrain, '->', actionName, ', min:', minBet #, ',cost:', cost
+            print '***action:', actionTrain, '->', actionName, ', min:', minBet  # , ',cost:', cost
         return actionName
 
 # observation, actionID, reward, newObservation, done
