@@ -36,7 +36,7 @@ lastsidepot, (numer), resolve when someone all in  <NOT USING NOW>
 reloadCount, (number), only used when TM's version <ONLY TM USED>
 hand, (list), information about two card <IN TREYS FORMAT>
 '''
-COMMUNITY_STATE = namedtuple('community_state', ['button', 'smallblind', 'bigblind', 'totalpot', 'lastraise', 'call_price', 'to_call', 'current_player'])
+COMMUNITY_STATE = namedtuple('community_state', ['button', 'smallblind', 'bigblind', 'totalpot', 'lastraise', 'call_price', 'to_call', 'current_player', 'round'])
 '''
 button, (id), the id of bigblind {e.g. button(id=0), smallblind(id=1), bigblind(id=2) }
 smallblind, (number), the current small blind amount
@@ -46,6 +46,7 @@ lastraise, (number), the last posted raise amount
 call_price, (number), minimum required raise amount, (acuumulate all round)
 to_call, (number), the amount required to call, (current round)
 current_player, (id), the id of current player
+round, (number), the current round (deal, flop, turn, river)
 '''
 STATE = namedtuple('state', ['player_states', 'community_state', 'community_card'])
 

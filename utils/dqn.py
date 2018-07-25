@@ -11,6 +11,7 @@ from keras.layers.advanced_activations import LeakyReLU
 from keras.regularizers import l2
 from keras.models import load_model
 import os
+import json
 
 # Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -228,20 +229,23 @@ class DeepQ(object):
                 if isFinal:
                     X_batch = np.append(X_batch, np.array([newState.copy()]), axis=0)
                     Y_batch = np.append(Y_batch, np.array([[reward] * self.output_size]), axis=0)
-            self.model.fit(X_batch, Y_batch, batch_size=len(miniBatch), epochs=1, verbose=0)
+
+            return self.model.fit(X_batch, Y_batch, batch_size=len(miniBatch), epochs=1, verbose=0)
+
+
 
 
 class DeepQTrain(DeepQ):
     def __init__(self, inputSize, outputSize, model_name_prefix):
         
         self.stepCounter = 0
-        self.updateTargetNetworkCounter = 1000 # 10000
+        self.updateTargetNetworkCounter = 10000 # 10000
         explorationRate = 0.9
         self.minibatch_size = 128
         self.learnStart = 128
         learningRate = 0.00025
         discountFactor = 0.99
-        memorySize = 10000 # 1000000
+        memorySize = 100000 # 1000000
 
         super(DeepQTrain, self).__init__(inputSize, outputSize, memorySize, discountFactor, learningRate, \
             self.learnStart, explorationRate, model_name_prefix)
@@ -255,11 +259,17 @@ class DeepQTrain(DeepQ):
     def _learnOnMinBatch(self):
         if self.stepCounter >= self.learnStart:
             if self.stepCounter <= self.updateTargetNetworkCounter:
-                self.learnOnMiniBatch(self.minibatch_size, False)
+                history = self.learnOnMiniBatch(self.minibatch_size, False)
                 # print "[INFO] Learn Start <= UpdateTargetNetwork"
+
+                if self.stepCounter % self.updateTargetNetworkCounter == 0 and history is not None:
+                    print('history: ', json.dumps(history.history))
+
             else:
-                self.learnOnMiniBatch(self.minibatch_size, True)
+                history = self.learnOnMiniBatch(self.minibatch_size, True)
                 # print "[INFO] Learn Start > UpdateTargetNetwork"
+                if self.stepCounter % self.updateTargetNetworkCounter == 0 and history is not None:
+                    print('history: ', json.dumps(history.history))
 
     def _updateTargetNetwork(self):
         if self.stepCounter % self.updateTargetNetworkCounter == 0:

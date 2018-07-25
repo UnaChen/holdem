@@ -519,7 +519,8 @@ class TexasHoldemEnv(Env, utils.EzPickle):
             int(self._lastraise),
             int(self._roundpot),
             int(self._tocall - self._current_player.currentbet),
-            int(self._current_player.player_id)
+            int(self._current_player.player_id),
+            int(self._round),
         )
         return STATE(tuple(player_states), community_states, self._pad(self.community, 5, -1))
 
