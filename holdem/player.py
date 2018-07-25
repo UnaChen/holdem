@@ -28,7 +28,6 @@ from deuces import Card
 
 
 class Player(object):
-
     CHECK = 0
     CALL = 1
     RAISE = 2
@@ -77,7 +76,7 @@ class Player(object):
         # not for bigblind, smallblind 
         # bet_size = min(player.stack, player_bet) + player.currentbet
         self.playedthisround = True
-        if not bet_size: # for check
+        if not bet_size:  # for check
             return
         actualbet = bet_size - self.currentbet
         if self.stack <= actualbet:
@@ -103,6 +102,7 @@ class Player(object):
     def player_move(self, table_state, action):
         self.update_localstate(table_state)
         smallblind = table_state.get('smallblind')
+        bigblind = table_state.get('bigblind')
         # tocall = min(table_state.get('tocall', 0), self.stack)
         # minraise = table_state.get('minraise', 0)
         tocall = table_state.get('tocall', 0)
@@ -117,7 +117,7 @@ class Player(object):
                 if self._roundBetCount > self._roundBetLimit:
                     # raise error.Error('raise times ({}) in this round had exceed limitation ({})'.format(self._roundRaiseCount, self._roundRaiseLimit))
                     return self._call(tocall)
-                move_tuple = self._bet(bet_amount, tocall)
+                move_tuple = self._bet(bet_amount, tocall, bigblind)
                 self._roundBetCount += 1
             elif action_idx == Player.CHECK:
                 move_tuple = ('check', 0)
@@ -131,7 +131,7 @@ class Player(object):
                 if self._roundBetCount > self._roundBetLimit:
                     # raise error.Error('raise times ({}) in this round had exceed limitation ({})'.format(self._roundRaiseCount, self._roundRaiseLimit))
                     return self._call(tocall)
-                move_tuple = self._bet(bet_amount, tocall)
+                move_tuple = self._bet(bet_amount, tocall, bigblind)
                 self._roundBetCount += 1
             elif action_idx == Player.CALL:
                 move_tuple = self._call(tocall)
@@ -144,14 +144,16 @@ class Player(object):
 
     def _call(self, tocall):
         if tocall > self.stack:
-            return ('raise', self.stack) # allin
+            return ('raise', self.stack)  # allin
         else:
             return ('call', tocall)
 
-    def _bet(self, amount, tocall):
+    def _bet(self, amount, tocall, bigblind):
         if tocall > self.stack or amount > self.stack:
-            return ('raise', self.stack) # allin
-        elif amount < tocall:
+            return ('raise', self.stack)  # allin
+        elif amount <= 0:
+            return ('raise', bigblind)
+        elif amount <= tocall:
             return ('call', tocall)
         else:
             return ('raise', amount)

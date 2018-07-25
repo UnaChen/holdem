@@ -28,13 +28,15 @@ from deuces import Card, Deck, Evaluator
 from .player import Player
 from .utils import hand_to_str, format_action, PLAYER_STATE, COMMUNITY_STATE, STATE
 
+
 class TexasHoldemEnv(Env, utils.EzPickle):
-    BLIND_INCREMENTS = [[10,20], [20,40], [40,80], [80,160], [160,320], [320,640], [640,1280], [1280, 2560], [2560, 5120], [5120, 10240]]
+    BLIND_INCREMENTS = [[10, 20], [20, 40], [40, 80], [80, 160], [160, 320], [320, 640], [640, 1280], [1280, 2560],
+                        [2560, 5120], [5120, 10240]]
 
     def __init__(self, n_seats, max_limit=20000, debug=False):
-        n_suits = 4                     # s,h,d,c
-        n_ranks = 13                    # 2,3,4,5,6,7,8,9,T,J,Q,K,A
-        n_community_cards = 5           # flop, turn, river
+        n_suits = 4  # s,h,d,c
+        n_ranks = 13  # 2,3,4,5,6,7,8,9,T,J,Q,K,A
+        n_community_cards = 5  # flop, turn, river
         n_pocket_cards = 2
         n_stud = 5
 
@@ -52,7 +54,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         self._discard = []
 
         self._side_pots = [0] * n_seats
-        self._current_sidepot = 0 # index of _side_pots
+        self._current_sidepot = 0  # index of _side_pots
         self._totalpot = 0
         self._tocall = 0
         self._lastraise = 0
@@ -67,48 +69,49 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         self._last_actions = None
 
         self.observation_space = spaces.Tuple([
-            spaces.Tuple([                # # **players info**
+            spaces.Tuple([  # # **players info**
                              spaces.MultiDiscrete([
-                                 1,                   #  (boolean) is_emptyplayer
-                                 n_seats - 1,         #  (numbers) number of seat
-                                 max_limit,           #  (numbers) stack
-                                 1,                   #  (boolean) is_playing_hand
-                                 max_limit,           #  (numbers) handrank, need_error_msg?  (0 could be no rank, no error_msg needed
-                                 1,                   #  (boolean) is_playedthisround
-                                 max_limit,           #  (numbers) is_betting
-                                 1,                   #  (boolean) isallin
-                                 max_limit,           #  (numbers) last side pot
+                                 1,  # (boolean) is_emptyplayer
+                                 n_seats - 1,  # (numbers) number of seat
+                                 max_limit,  # (numbers) stack
+                                 1,  # (boolean) is_playing_hand
+                                 max_limit,
+                                 # (numbers) handrank, need_error_msg?  (0 could be no rank, no error_msg needed
+                                 1,  # (boolean) is_playedthisround
+                                 max_limit,  # (numbers) is_betting
+                                 1,  # (boolean) isallin
+                                 max_limit,  # (numbers) last side pot
                              ]),
                              spaces.Tuple([
-                                              spaces.MultiDiscrete([    # # **players hand**
-                                                  1,                # (boolean) is_avalible
-                                                  n_suits,          #  (catagory) suit,
-                                                  n_ranks,          #  (catagory) rank.
+                                              spaces.MultiDiscrete([  # # **players hand**
+                                                  1,  # (boolean) is_avalible
+                                                  n_suits,  # (catagory) suit,
+                                                  n_ranks,  # (catagory) rank.
                                               ])
                                           ] * n_pocket_cards)
                          ] * n_seats),
             spaces.Tuple([
-                             spaces.Discrete(n_seats - 1), # big blind location
-                             spaces.Discrete(max_limit),   # small blind
-                             spaces.Discrete(max_limit),   # big blind
-                             spaces.Discrete(max_limit*n_seats),   # pot amount
-                             spaces.Discrete(max_limit),   # last raise
-                             spaces.Discrete(max_limit),   # minimum amount to raise
-                             spaces.Discrete(max_limit),   # how much needed to call by current player.
-                             spaces.Discrete(n_seats - 1), # current player seat location.
-                             spaces.MultiDiscrete([        # community cards
-                                 1,                # (boolean) is_avalible
-                                 n_suits,          # (catagory) suit
-                                 n_ranks,          # (catagory) rank
-                                 1,                # (boolean) is_flopped
+                             spaces.Discrete(n_seats - 1),  # big blind location
+                             spaces.Discrete(max_limit),  # small blind
+                             spaces.Discrete(max_limit),  # big blind
+                             spaces.Discrete(max_limit * n_seats),  # pot amount
+                             spaces.Discrete(max_limit),  # last raise
+                             spaces.Discrete(max_limit),  # minimum amount to raise
+                             spaces.Discrete(max_limit),  # how much needed to call by current player.
+                             spaces.Discrete(n_seats - 1),  # current player seat location.
+                             spaces.MultiDiscrete([  # community cards
+                                 1,  # (boolean) is_avalible
+                                 n_suits,  # (catagory) suit
+                                 n_ranks,  # (catagory) rank
+                                 1,  # (boolean) is_flopped
                              ]),
                          ] * n_stud),
         ])
 
         self.action_space = spaces.Tuple([
                                              spaces.MultiDiscrete([
-                                                 3,                     # action_id
-                                                 max_limit,             # raise_amount
+                                                 3,  # action_id
+                                                 max_limit,  # raise_amount
                                              ]),
                                          ] * n_seats)
         self.episode_end = False
@@ -124,20 +127,19 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         self._discard = []
 
         self._side_pots = [0] * self.n_seats
-        self._current_sidepot = 0 # index of _side_pots
+        self._current_sidepot = 0  # index of _side_pots
         self._totalpot = 0
         self._tocall = 0
         self._lastraise = 0
 
-        
         self._current_player = None
         self._last_player = None
         self._last_actions = None
-        
+
         self.episode_end = False
         self.winning_players = []
         self.round_holder = -1
-        
+
     def add_player(self, seat_id, stack=1000):
         """Add a player to the environment seat with the given stack (chipcount)"""
         player_id = seat_id
@@ -176,7 +178,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         self._reset_game()
         self._ready_players()
         self._cycle += 1
-        if self._cycle %  self.n_seats == 0:
+        if self._cycle % self.n_seats == 0:
             self._increment_blinds()
 
         [self._smallblind, self._bigblind] = TexasHoldemEnv.BLIND_INCREMENTS[self._blind_index]
@@ -225,48 +227,47 @@ class TexasHoldemEnv(Env, utils.EzPickle):
             self._resolve_round(players)
             return self._get_current_step_returns(terminal)
 
-
         self._last_player = self._current_player
         self._last_actions = actions
 
-        if not self._current_player.playedthisround and len([p for p in players if not p.isallin]) >= 1:
-            if self._current_player.isallin:
-                self._current_player = self._next(players, self._current_player)
-                return self._get_current_step_returns(False)
+        if self._current_player.isallin:
+            self._current_player = self._next(players, self._current_player)
+            return self._get_current_step_returns(False)
 
-            move = self._current_player.player_move(
-                self._output_state(self._current_player), actions[self._current_player.player_id])
+        move = self._current_player.player_move(
+            self._output_state(self._current_player), actions[self._current_player.player_id])
 
-            if move[0] == 'call':
-                self._player_bet(self._current_player, self._tocall-self._current_player.currentbet)
-                if self._debug:
-                    print('[DEBUG] Player', self._current_player.player_id, move)
-                self._current_player = self._next(players, self._current_player)
-            elif move[0] == 'check':
-                self._player_bet(self._current_player, 0)
-                if self._debug:
-                    print('[DEBUG] Player', self._current_player.player_id, move)
-                self._current_player = self._next(players, self._current_player)
-            elif move[0] == 'raise':
-                self._player_bet(self._current_player, move[1])
-                if self._debug:
-                    print('[DEBUG] Player', self._current_player.player_id, move)
-                for p in players:
-                    if p != self._current_player:
-                        p.playedthisround = False
-                self._current_player = self._next(players, self._current_player)
-            elif move[0] == 'fold':
-                self._current_player.playing_hand = False
-                folded_player = self._current_player
-                if self._debug:
-                    print('[DEBUG] Player', self._current_player.player_id, move)
-                self._current_player = self._next(players, self._current_player)
-                players.remove(folded_player)
-                self._folded_players.append(folded_player)
-                # break if a single player left
-                if len(players) == 1:
-                    self._resolve(players)
-        else:
+        if move[0] == 'call':
+            self._player_bet(self._current_player, self._tocall - self._current_player.currentbet)
+            if self._debug:
+                print('[DEBUG] Player', self._current_player.player_id, move)
+            self._current_player = self._next(players, self._current_player)
+        elif move[0] == 'check':
+            self._player_bet(self._current_player, 0)
+            if self._debug:
+                print('[DEBUG] Player', self._current_player.player_id, move)
+            self._current_player = self._next(players, self._current_player)
+        elif move[0] == 'raise':
+            self._player_bet(self._current_player, move[1])
+            if self._debug:
+                print('[DEBUG] Player', self._current_player.player_id, move)
+            for p in players:
+                if p != self._current_player:
+                    p.playedthisround = False
+            self._current_player = self._next(players, self._current_player)
+        elif move[0] == 'fold':
+            self._current_player.playing_hand = False
+            folded_player = self._current_player
+            if self._debug:
+                print('[DEBUG] Player', self._current_player.player_id, move)
+            self._current_player = self._next(players, self._current_player)
+            players.remove(folded_player)
+            self._folded_players.append(folded_player)
+
+        if len([p for p in players if not p.isallin]) < 1:
+            while self._round < 4:
+                self._resolve(players)
+        elif self._current_player.playedthisround:
             self._resolve(players)
 
         terminal = False
@@ -279,17 +280,20 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         print('Cycle {}, Round {}, total pot: {} >>>'.format(self._cycle, self._round, self._totalpot))
         if self._last_actions is not None:
             pid = self._last_player.player_id
-            print('last action by player {}:'.format(pid) + '\t' + format_action(self._last_player, self._last_actions[pid]))
+            print('last action by player {}:'.format(pid) + '\t' + format_action(self._last_player,
+                                                                                 self._last_actions[pid]))
 
         state = self._get_current_state()
 
-        #(player_infos, player_hands) = zip(*state.player_state)
+        # (player_infos, player_hands) = zip(*state.player_state)
 
         print('community:')
         print('-' + hand_to_str(state.community_card, mode))
         print('players:')
         for idx, playerstate in enumerate(state.player_states):
-            print('{}{}stack: {}'.format(idx, hand_to_str(playerstate.hand, mode), self._seats[idx].stack))
+            print(
+                '{}{}stack: {}'.format(idx, hand_to_str(playerstate.hand, mode),
+                                       self._seats[idx].stack))
         print("<<<")
 
     def _resolve(self, players):
@@ -337,17 +341,17 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         # print("Lift is trnge -------- {}, {}, {}".format(player_bet, player.currentbet, player.stack))
         self._totalpot += (total_bet - player.currentbet)
         # print("{}, {}".format(total_bet, total_bet - player.currentbet))
-        player.bet(total_bet) # update acumulative bet (not add another bet)
+        player.bet(total_bet)  # update acumulative bet (not add another bet)
 
         self._tocall = max(self._tocall, total_bet)
         if self._tocall > 0:
             self._tocall = max(self._tocall, self._bigblind)
-        self._lastraise = max(self._lastraise, total_bet  - self._lastraise)
+        self._lastraise = max(self._lastraise, total_bet - self._lastraise)
 
     def _first_to_act(self, players):
         if self._round == 0 and len(players) == 2:
             return self._next(sorted(
-                players + [self._seats[self._button]], key=lambda x:x.get_seat()),
+                players + [self._seats[self._button]], key=lambda x: x.get_seat()),
                 self._seats[self._button])
         try:
             first = [player for player in players if player.get_seat() > self._button][0]
@@ -358,7 +362,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
     def _next(self, players, current_player):
         ''' get next player '''
         idx = players.index(current_player)
-        return players[(idx+1) % len(players)]
+        return players[(idx + 1) % len(players)]
 
     def _deal(self):
         for player in self._seats:
@@ -366,15 +370,15 @@ class TexasHoldemEnv(Env, utils.EzPickle):
                 player.hand = self._deck.draw(2)
 
     def _flop(self):
-        self._discard.append(self._deck.draw(1)) #burn
+        self._discard.append(self._deck.draw(1))  # burn
         self.community = self._deck.draw(3)
 
     def _turn(self):
-        self._discard.append(self._deck.draw(1)) #burn
+        self._discard.append(self._deck.draw(1))  # burn
         self.community.append(self._deck.draw(1))
 
     def _river(self):
-        self._discard.append(self._deck.draw(1)) #burn
+        self._discard.append(self._deck.draw(1))  # burn
         self.community.append(self._deck.draw(1))
 
     def _ready_players(self):
@@ -398,7 +402,8 @@ class TexasHoldemEnv(Env, utils.EzPickle):
                 p.currentbet = 0
             return
 
-        smallest_players_allin = [p for p, bet in zip(players, [p.currentbet for p in players]) if bet == smallest_bet and p.isallin]
+        smallest_players_allin = [p for p, bet in zip(players, [p.currentbet for p in players]) if
+                                  bet == smallest_bet and p.isallin]
 
         for p in players:
             self._side_pots[self._current_sidepot] += min(smallest_bet, p.currentbet)
@@ -434,16 +439,17 @@ class TexasHoldemEnv(Env, utils.EzPickle):
             temp_pots = [pot for pot in self._side_pots if pot > 0]
 
             # compute who wins each side pot and pay winners
-            for pot_idx,_ in enumerate(temp_pots):
+            for pot_idx, _ in enumerate(temp_pots):
                 # find players involved in given side_pot, compute the winner(s)
                 pot_contributors = [p for p in players if p.lastsidepot >= pot_idx]
                 winning_rank = min([p.handrank for p in pot_contributors])
                 winning_players = [p for p in pot_contributors if p.handrank == winning_rank]
 
                 for player in winning_players:
-                    split_amount = int(self._side_pots[pot_idx]/len(winning_players))
+                    split_amount = int(self._side_pots[pot_idx] / len(winning_players))
                     if self._debug:
-                        print('[DEBUG] Player', player.player_id, 'wins side pot (', int(self._side_pots[pot_idx]/len(winning_players)), ')')
+                        print('[DEBUG] Player', player.player_id, 'wins side pot (',
+                              int(self._side_pots[pot_idx] / len(winning_players)), ')')
                     player.refund(split_amount)
                     self._side_pots[pot_idx] -= split_amount
 
@@ -490,7 +496,6 @@ class TexasHoldemEnv(Env, utils.EzPickle):
             l = []
         return l + [v] * (n - len(l))
 
-
     def _get_current_state(self):
         player_states = []
         for player in self._seats:
@@ -508,7 +513,6 @@ class TexasHoldemEnv(Env, utils.EzPickle):
                 self._pad(player.hand, 2, -1)
             )
             player_states.append(player_features)
-
 
         community_states = COMMUNITY_STATE(
             int(self._button),
@@ -530,4 +534,4 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         obs = self._get_current_state()
         # TODO, make this something else?
         rew = [player.stack for player in self._seats]
-        return obs, rew, terminal, [] # TODO, return some info?
+        return obs, rew, terminal, []  # TODO, return some info?

@@ -6,4 +6,5 @@ from .allcallAgent import allCallModel
 from .allinAgent import allinModel
 from .allraiseAgent import allRaiseModel
 from .udqnAgent import UdqnModel
+from .CdqnAgent import CdqnModel
 from .hodorAgent import WinRateGambler
