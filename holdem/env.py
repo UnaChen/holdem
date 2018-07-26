@@ -221,18 +221,18 @@ class TexasHoldemEnv(Env, utils.EzPickle):
             raise error.Error('Rounds already finished, needs to be reset.')
 
         players = [p for p in self._seats if p.playing_hand]
-        if len(players) == 1:
-            # raise error.Error('Round cannot be played with one player.')
-            terminal = True
-            self._resolve_round(players)
-            return self._get_current_step_returns(terminal)
+        # if len(players) == 1:
+        #     # raise error.Error('Round cannot be played with one player.')
+        #     terminal = True
+        #     self._resolve_round(players)
+        #     return self._get_current_step_returns(terminal)
 
         self._last_player = self._current_player
         self._last_actions = actions
 
-        if self._current_player.isallin:
-            self._current_player = self._next(players, self._current_player)
-            return self._get_current_step_returns(False)
+        # if self._current_player.isallin:
+        #     self._current_player = self._next(players, self._current_player)
+        #     return self._get_current_step_returns(False)
 
         move = self._current_player.player_move(
             self._output_state(self._current_player), actions[self._current_player.player_id])
@@ -253,7 +253,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
                 print('[DEBUG] Player', self._current_player.player_id, move)
             for p in players:
                 if p != self._current_player:
-                    p.playedthisround = False
+                    p.playedthisround = p.isallin
             self._current_player = self._next(players, self._current_player)
         elif move[0] == 'fold':
             self._current_player.playing_hand = False
@@ -419,8 +419,8 @@ class TexasHoldemEnv(Env, utils.EzPickle):
     def _new_round(self):
         for player in self._player_dict.values():
             player.currentbet = 0
-            player._roundRaiseCount = 0
-            player.playedthisround = False
+            player._roundRaiseCount = 0            
+            player.playedthisround = player.isallin 
         self._round += 1
         self._tocall = 0
         self._lastraise = 0
