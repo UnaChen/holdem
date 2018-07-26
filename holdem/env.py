@@ -26,7 +26,7 @@ from gym.utils import seeding
 from deuces import Card, Deck, Evaluator
 
 from .player import Player
-from .utils import hand_to_str, format_action, PLAYER_STATE, COMMUNITY_STATE, STATE
+from .utils import hand_to_str, format_action, PLAYER_STATE, COMMUNITY_STATE, STATE, action_table
 
 
 class TexasHoldemEnv(Env, utils.EzPickle):
@@ -67,6 +67,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         self._debug = debug
         self._last_player = None
         self._last_actions = None
+        self._last_moved_actions = None
 
         self.observation_space = spaces.Tuple([
             spaces.Tuple([  # # **players info**
@@ -135,6 +136,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         self._current_player = None
         self._last_player = None
         self._last_actions = None
+        self._last_moved_actions = None
 
         self.episode_end = False
         self.winning_players = []
@@ -221,21 +223,15 @@ class TexasHoldemEnv(Env, utils.EzPickle):
             raise error.Error('Rounds already finished, needs to be reset.')
 
         players = [p for p in self._seats if p.playing_hand]
-        # if len(players) == 1:
-        #     # raise error.Error('Round cannot be played with one player.')
-        #     terminal = True
-        #     self._resolve_round(players)
-        #     return self._get_current_step_returns(terminal)
 
         self._last_player = self._current_player
         self._last_actions = actions
-
-        # if self._current_player.isallin:
-        #     self._current_player = self._next(players, self._current_player)
-        #     return self._get_current_step_returns(False)
+        self._last_moved_actions = [ a for a in actions ]
 
         move = self._current_player.player_move(
             self._output_state(self._current_player), actions[self._current_player.player_id])
+        if (getattr(action_table(), move[0].upper()), move[1]) != actions[self._current_player.player_id]:
+            self._last_moved_actions[self._current_player.player_id] = (getattr(action_table(), move[0].upper()), move[1])
 
         if move[0] == 'call':
             self._player_bet(self._current_player, self._tocall - self._current_player.currentbet)
@@ -280,8 +276,9 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         print('Cycle {}, Round {}, total pot: {} >>>'.format(self._cycle, self._round, self._totalpot))
         if self._last_actions is not None:
             pid = self._last_player.player_id
-            print('last action by player {}:'.format(pid) + '\t' + format_action(self._last_player,
-                                                                                 self._last_actions[pid]))
+            print('last action by player {}:'.format(pid) + '\t' + \
+                format_action(self._last_player, self._last_actions[pid]) + ' -> ' + \
+                format_action(self._last_player, self._last_moved_actions[pid]))
 
         state = self._get_current_state()
 
@@ -292,8 +289,10 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         print('players:')
         for idx, playerstate in enumerate(state.player_states):
             print(
-                '{}{}stack: {}'.format(idx, hand_to_str(playerstate.hand, mode),
-                                       self._seats[idx].stack))
+                '{}{}stack: {}\tplayed:{}\tfolded:{}'.format(idx, hand_to_str(playerstate.hand, mode),
+                                       self._seats[idx].stack, 
+                                       1 if self._seats[idx].playedthisround else 0,
+                                       0 if self._seats[idx].playing_hand else 1))
         print("<<<")
 
     def _resolve(self, players):
