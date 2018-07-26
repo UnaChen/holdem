@@ -264,7 +264,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
             players.remove(folded_player)
             self._folded_players.append(folded_player)
 
-        if len([p for p in players if not p.isallin]) < 1:
+        if len([p for p in players if not p.isallin]) < 1 or len(players) <= 1:
             while self._round < 4:
                 self._resolve(players)
         elif self._current_player.playedthisround:
