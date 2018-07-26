@@ -15,8 +15,6 @@ def lets_play(env, n_seats, model_list):
             if env.episode_end:
                 break
 
-
-
             while not cycle_terminal:
                 actions = holdem.model_list_action(cur_state=cur_state, n_seats=n_seats, model_list=model_list)
 
@@ -59,19 +57,19 @@ env.add_player(4, stack=3000)
 model_list.append(agent.CdqnModel(model_prefix_name, shared_deep_q))
 
 env.add_player(5, stack=3000)
-model_list.append(agent.CdqnModel(model_prefix_name, shared_deep_q))
+model_list.append(agent.WinRateGambler())
 
 env.add_player(6, stack=3000)
-model_list.append(agent.CdqnModel(model_prefix_name, shared_deep_q))
+model_list.append(agent.WinRateGambler())
 
 env.add_player(7, stack=3000)
-model_list.append(agent.CdqnModel(model_prefix_name, shared_deep_q))
+model_list.append(agent.WinRateGambler())
 
 env.add_player(8, stack=3000)
-model_list.append(agent.CdqnModel(model_prefix_name, shared_deep_q))
+model_list.append(agent.WinRateGambler())
 
 env.add_player(9, stack=3000)
-model_list.append(agent.CdqnModel(model_prefix_name, shared_deep_q))
+model_list.append(agent.WinRateGambler())
 
 # play out a hand
 try:

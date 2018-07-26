@@ -8,9 +8,10 @@ from holdem import ACTION, action_table, card_to_normal_str
 
 
 class CdqnModel:
-    stateSize = 10  # [monteCarlo, playerCount, remainChips, investChips, pot, toCall, oneHotRound0, oneHotRound1, oneHotRound2, oneHotRound3]
-    actionTrain = {0: 'FOLD', 1: 'CHECK', 2: 'RAISE*1', 3: 'RAISE*2', 4: 'RAISE*4', 5: 'RAISE*8', \
-                   6: 'RAISE*16', 7: 'RAISE*32', 8: 'RAISE*48', 9: 'RAISE*64', 10: 'RAISE*100'}
+    stateSize = 11  # [monteCarlo, playerCount, remainChips, investChips, pot, toCall, oneHotRound0, oneHotRound1, oneHotRound2, oneHotRound3, oneHotRound4]
+    # actionTrain = {0: 'FOLD', 1: 'CHECK', 2: 'RAISE*1', 3: 'RAISE*2', 4: 'RAISE*4', 5: 'RAISE*8', \
+    #                6: 'RAISE*16', 7: 'RAISE*32', 8: 'RAISE*48', 9: 'RAISE*64', 10: 'RAISE*100'}
+    actionTrain = {0: 'FOLD', 1: 'CHECK', 2: 'RAISE*1', 3: 'RAISE*2'}
 
     def __init__(self, model_name_prefix="test", deep_q=None):
         # self.reload_left = 2
@@ -131,13 +132,16 @@ class CdqnModel:
 
     def _toOneHotRound(self, round):
         if round == 0:
-            return [1, 0, 0, 0]
+            return [1, 0, 0, 0, 0]
         elif round == 1:
-            return [0, 1, 0, 0]
+            return [0, 1, 0, 0, 0]
         elif round == 2:
-            return [0, 0, 1, 0]
+            return [0, 0, 1, 0, 0]
+        elif round == 3:
+            return [0, 0, 0, 1, 0]
         else:
-            return [0, 0, 0, 1]
+            return [0, 0, 0, 0, 1]
+
 
 # observation, actionID, reward, newObservation, done
 # observation: 
