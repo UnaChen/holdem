@@ -228,10 +228,12 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         self._last_actions = actions
         self._last_moved_actions = [ a for a in actions ]
 
+        oriAction = actions[self._current_player.player_id]
         move = self._current_player.player_move(
-            self._output_state(self._current_player), actions[self._current_player.player_id])
-        if (getattr(action_table(), move[0].upper()), move[1]) != actions[self._current_player.player_id]:
-            self._last_moved_actions[self._current_player.player_id] = (getattr(action_table(), move[0].upper()), move[1])
+            self._output_state(self._current_player), oriAction)
+        newAction = (getattr(action_table(), move[0].upper()), move[1])
+        if (move != newAction):
+            self._last_moved_actions[self._current_player.player_id] = newAction
 
         if move[0] == 'call':
             self._player_bet(self._current_player, self._tocall - self._current_player.currentbet)
@@ -249,7 +251,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
                 print('[DEBUG] Player', self._current_player.player_id, move)
             for p in players:
                 if p != self._current_player:
-                    p.playedthisround = p.isallin
+                    p.playedthisround = False
             self._current_player = self._next(players, self._current_player)
         elif move[0] == 'fold':
             self._current_player.playing_hand = False
@@ -260,7 +262,15 @@ class TexasHoldemEnv(Env, utils.EzPickle):
             players.remove(folded_player)
             self._folded_players.append(folded_player)
 
-        if len([p for p in players if not p.isallin]) < 1 or len(players) <= 1:
+        # for record last action.currentbet
+        pid = self._last_player.player_id
+        if self._last_actions[pid][0] == action_table().CALL:
+            self._last_actions[pid] = (self._last_actions[pid][0], self._last_player.currentbet)
+        if self._last_moved_actions[pid][0] == action_table().CALL:
+            self._last_moved_actions[pid] = (self._last_moved_actions[pid][0], self._last_player.currentbet)    
+
+        playersNotAllin = [p for p in players if not p.isallin]
+        if (len(playersNotAllin) < 1) or (len(playersNotAllin) == 1 and playersNotAllin[0] == self._last_player)  or (len(players) <= 1):            
             while self._round < 4:
                 self._resolve(players)
         elif self._current_player.playedthisround:
@@ -270,6 +280,8 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         if self._round == 4:
             terminal = True
             self._resolve_round(players)
+            # traceback final state
+            self._current_player = self._last_player
         return self._get_current_step_returns(terminal)
 
     def render(self, mode='machine', close=False):
@@ -289,7 +301,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         print('players:')
         for idx, playerstate in enumerate(state.player_states):
             print(
-                '{}{}stack: {}\tplayed:{}\tfolded:{}'.format(idx, hand_to_str(playerstate.hand, mode),
+                '{}{}stack: {}\tplayed:{}\tnotJoin/folded:{}'.format(idx, hand_to_str(playerstate.hand, mode),
                                        self._seats[idx].stack, 
                                        1 if self._seats[idx].playedthisround else 0,
                                        0 if self._seats[idx].playing_hand else 1))
@@ -353,7 +365,8 @@ class TexasHoldemEnv(Env, utils.EzPickle):
                 players + [self._seats[self._button]], key=lambda x: x.get_seat()),
                 self._seats[self._button])
         try:
-            first = [player for player in players if player.get_seat() > self._button][0]
+            first = [player for player in players if (player.get_seat() > self._button) and \
+                (not player.isallin)][0]
         except IndexError:
             first = players[0]
         return first
@@ -361,7 +374,12 @@ class TexasHoldemEnv(Env, utils.EzPickle):
     def _next(self, players, current_player):
         ''' get next player '''
         idx = players.index(current_player)
-        return players[(idx + 1) % len(players)]
+        realIdx = idx
+        for i in range(1, len(players)):
+            realIdx = (idx+i) % len(players)
+            if not players[realIdx].isallin:
+                return players[realIdx]
+        return players[realIdx]
 
     def _deal(self):
         for player in self._seats:
@@ -419,7 +437,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         for player in self._player_dict.values():
             player.currentbet = 0
             player._roundRaiseCount = 0            
-            player.playedthisround = player.isallin 
+            player.playedthisround = False
         self._round += 1
         self._tocall = 0
         self._lastraise = 0
