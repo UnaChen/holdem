@@ -23,7 +23,7 @@ def lets_play(env, n_seats, model_list):
                     m.showAction(actions)
 
                 cur_state, rews, cycle_terminal, info = env.step(actions)
-                env.render(mode="human")
+                # env.render(mode="human")
 
             for m in model_list:
                 m.endCycle(cur_state)
@@ -79,10 +79,9 @@ try:
     while True:
         lets_play(env, env.n_seats, model_list)
 
-        
         print time.ctime(), ('episode ', episode), ('cycle', env.cycle - 1)
         sys.stdout.flush()
-        raw_input("press for next episode...")
+        # raw_input("press for next episode...")
 
         env.reset()
         episode += 1

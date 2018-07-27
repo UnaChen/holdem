@@ -9,8 +9,7 @@ from holdem import ACTION, action_table, card_to_normal_str
 
 class UdqnModel():
     stateSize = 4  # [monteCarlo, remainChips, investChips, pot]
-    actionTrain = {0: 'FOLD', 1: 'CHECK', 2: 'RAISE*1', 3: 'RAISE*2', 4: 'RAISE*4', 5: 'RAISE*8', \
-                   6: 'RAISE*16', 7: 'RAISE*32', 8: 'RAISE*48', 9: 'RAISE*64', 10: 'RAISE*100'}
+    actionTrain = {0: 'FOLD', 1: 'CHECK', 2: 'RAISE*1', 3: 'RAISE*2', 4: 'RAISE*10', 5: 'RAISE*20'}
 
     def __init__(self, model_name_prefix="test", deep_q=None):
         # self.reload_left = 2
