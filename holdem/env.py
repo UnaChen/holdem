@@ -50,6 +50,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
 
         self.community = []
         self._round = 0
+        self._roundBetCount = 0
         self._button = 0
         self._discard = []
 
@@ -124,6 +125,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
 
         self.community = []
         self._round = 0
+        self._roundBetCount = 0
         self._button = 0
         self._discard = []
 
@@ -190,6 +192,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
             players = [p for p in self._seats if p.playing_hand]
             self._new_round()
             self._round = 0
+            self._roundBetCount = 0
             self._current_player = self._first_to_act(players)
             self._post_smallblind(self._current_player)
             self._current_player = self._next(players, self._current_player)
@@ -247,6 +250,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
             self._current_player = self._next(players, self._current_player)
         elif move[0] == 'raise':
             self._player_bet(self._current_player, move[1])
+            self._roundBetCount += 1
             if self._debug:
                 print('[DEBUG] Player', self._current_player.player_id, move)
             for p in players:
@@ -285,7 +289,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         return self._get_current_step_returns(terminal)
 
     def render(self, mode='machine', close=False):
-        print('Cycle {}, Round {}, total pot: {} >>>'.format(self._cycle, self._round, self._totalpot))
+        print('Cycle {}, Round {}, RoundBetCount {}, total pot: {} >>>'.format(self._cycle, self._round, self._roundBetCount, self._totalpot))
         if self._last_actions is not None:
             pid = self._last_player.player_id
             print('last action by player {}:'.format(pid) + '\t' + \
@@ -439,6 +443,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
             player._roundRaiseCount = 0            
             player.playedthisround = False
         self._round += 1
+        self._roundBetCount = 0
         self._tocall = 0
         self._lastraise = 0
         self._roundpot = 0
@@ -506,6 +511,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
             'player_id': current_player.player_id,
             'lastraise': self._lastraise,
             'minraise': max(self._bigblind, self._lastraise + self._tocall),
+            "roundbet_count": self._roundBetCount
         }
 
     def _pad(self, l, n, v):
