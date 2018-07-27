@@ -107,7 +107,7 @@ class UdqnModel():
         pot = state.community_state.totalpot / self.BB
         state = [self.winRate, remainChips, investChips, pot]
 
-        print 'time_getObs', (time.time() - start), state, self.playerid
+        # print 'time_getObs', (time.time() - start), state, self.playerid
         return np.array(state)
 
     def _addMemory(self, state, actionID, reward, done):
@@ -121,8 +121,8 @@ class UdqnModel():
         if 'FOLD' == actionTrain and minBet == 0:
             actionName = 'CHECK'
 
-        if actionTrain != actionName:
-            print '***action:', actionTrain, '->', actionName, ', min:', minBet  # , ',cost:', cost
+        # if actionTrain != actionName:
+        #     print '***action:', actionTrain, '->', actionName, ', min:', minBet  # , ',cost:', cost
         return actionName
 
 # observation, actionID, reward, newObservation, done

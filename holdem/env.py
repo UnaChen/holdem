@@ -42,7 +42,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
 
         self.n_seats = n_seats
 
-        self._cycle = 0
+        self.cycle = 0
         self._blind_index = 0
         [self._smallblind, self._bigblind] = TexasHoldemEnv.BLIND_INCREMENTS[0]
         self._deck = Deck()
@@ -119,7 +119,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         self.episode_end = False
 
     def init(self):
-        self._cycle = 0
+        self.cycle = 0
         self._blind_index = 0
         [self._smallblind, self._bigblind] = TexasHoldemEnv.BLIND_INCREMENTS[0]
 
@@ -181,8 +181,8 @@ class TexasHoldemEnv(Env, utils.EzPickle):
     def new_cycle(self):
         self._reset_game()
         self._ready_players()
-        self._cycle += 1
-        if self._cycle % self.n_seats == 0:
+        self.cycle += 1
+        if self.cycle % self.n_seats == 0:
             self._increment_blinds()
 
         [self._smallblind, self._bigblind] = TexasHoldemEnv.BLIND_INCREMENTS[self._blind_index]
@@ -289,7 +289,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         return self._get_current_step_returns(terminal)
 
     def render(self, mode='machine', close=False):
-        print('Cycle {}, Round {}, RoundBetCount {}, total pot: {} >>>'.format(self._cycle, self._round, self._roundBetCount, self._totalpot))
+        print('Cycle {}, Round {}, RoundBetCount {}, total pot: {} >>>'.format(self.cycle, self._round, self._roundBetCount, self._totalpot))
         if self._last_actions is not None:
             pid = self._last_player.player_id
             print('last action by player {}:'.format(pid) + '\t' + \
