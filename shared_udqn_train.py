@@ -4,6 +4,7 @@ import agent
 import traceback
 import sys
 import time
+import shutil
 from utils.dqn import DeepQTrain
 
 
@@ -78,12 +79,16 @@ try:
     episode = 0
     while True:
         lets_play(env, env.n_seats, model_list)
-
-        print time.ctime(), ('episode ', episode), ('cycle', env.cycle - 1)
+        
+        print time.ctime(), ('episode ', episode), ('cycle', env.cycle - 1), \
+            ('player', [p.stack for p in env.seats]))
         sys.stdout.flush()
         # raw_input("press for next episode...")
 
         env.reset()
         episode += 1
+        if episode % 1000 == 0:
+            shutil.copy('model/' + model_prefix_name + '-dqn_target_model', 
+                'model/' + model_prefix_name + '-dqn_target_model-' + str(episode))
 except Exception, e:
     print(e)
