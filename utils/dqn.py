@@ -263,13 +263,13 @@ class DeepQTrain(DeepQ):
                 # print "[INFO] Learn Start <= UpdateTargetNetwork"
 
                 if self.stepCounter % self.updateTargetNetworkCounter == 0 and history is not None:
-                    print('history: ', json.dumps(history.history)), ('stepCounter', stepCounter)
+                    print('history: ', json.dumps(history.history)), ('stepCounter', self.stepCounter)
 
             else:
                 history = self.learnOnMiniBatch(self.minibatch_size, True)
                 # print "[INFO] Learn Start > UpdateTargetNetwork"
                 if self.stepCounter % self.updateTargetNetworkCounter == 0 and history is not None:
-                    print('history: ', json.dumps(history.history)), ('stepCounter', stepCounter)
+                    print('history: ', json.dumps(history.history)), ('stepCounter', self.stepCounter)
 
     def _updateTargetNetwork(self):
         if self.stepCounter % self.updateTargetNetworkCounter == 0:
