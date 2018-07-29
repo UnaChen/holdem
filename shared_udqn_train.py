@@ -81,7 +81,7 @@ try:
         lets_play(env, env.n_seats, model_list)
         
         print time.ctime(), ('episode ', episode), ('cycle', env.cycle - 1), \
-            ('player', [p.stack for p in env.seats]))
+            ('player', [p.stack for p in env.seats])
         sys.stdout.flush()
         # raw_input("press for next episode...")
 
