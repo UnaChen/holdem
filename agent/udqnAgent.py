@@ -8,8 +8,14 @@ from holdem import ACTION, action_table, card_to_normal_str
 
 
 class UdqnModel():
-    stateSize = 4  # [monteCarlo, remainChips, investChips, pot]
-    actionTrain = {0: 'FOLD', 1: 'CHECK', 2: 'RAISE*1', 3: 'RAISE*2', 4: 'RAISE*10', 5: 'RAISE*20'}
+    
+    # ver1
+    # stateSize = 4  # [monteCarlo, remainChips, investChips, pot]
+    # actionTrain = {0: 'FOLD', 1: 'CHECK', 2: 'RAISE*1', 3: 'RAISE*2', 4: 'RAISE*10', 5: 'RAISE*20'}
+    # ver2 
+    stateSize = 6  # [monteCarlo, playerCount, remainChips, investChips, pot, toCall]
+    actionTrain = {0: 'FOLD', 1: 'CHECK', 2: 'RAISE*1', 3: 'RAISE*2', 4: 'RAISE*10'}
+    
 
     def __init__(self, model_name_prefix="test", deep_q=None):
         # self.reload_left = 2
@@ -104,7 +110,9 @@ class UdqnModel():
         remainChips = state.player_states[self.playerid].stack / self.BB
         investChips = state.player_states[self.playerid].betting / self.BB
         pot = state.community_state.totalpot / self.BB
-        state = [self.winRate, remainChips, investChips, pot]
+        toCallChips = state.community_state.to_call / self.BB
+        # state = [self.winRate, remainChips, investChips, pot] # ver1
+        state = [self.winRate, self.playerCount, remainChips, investChips, pot, toCallChips] # ver2
 
         # print 'time_getObs', (time.time() - start), state, self.playerid
         return np.array(state)
