@@ -16,21 +16,37 @@ def lets_play(env, n_seats, model_list):
                 break
 
             while not cycle_terminal:
-                actions = holdem.model_list_action(cur_state=cur_state, n_seats=n_seats, model_list=model_list)
+                player_id, actions = holdem.model_list_action(cur_state=cur_state, n_seats=n_seats,
+                                                              model_list=model_list)
 
-                for m in model_list:
-                    m.showAction(actions)
+                action = actions[player_id][0]
+                amount = actions[player_id][1]
 
-                cur_state, rews, cycle_terminal, info = env.step(actions)
+                # for m in model_list:
+                #     m.showAction(actions)
 
-            for m in model_list:
-                m.endCycle(cur_state)
+                new_state, players_stack, cycle_terminal, info = env.step(actions)
+
+                model_list[player_id]._onTakeAction(state=cur_state, newState=new_state, action=action, amount=amount,
+                                                    done=cycle_terminal)
+
+                cur_state = new_state
+
+                env.render(mode="human")
+
+            # for m in model_list:
+            #     m.endCycle(cur_state)
+
+            print "--------- end cycle ---------"
+            env.render(mode="human")
+            print "********* end cycle *********"
 
             # for s in cur_state.player_states:
             #     print( holdem.utils.hand_to_str(s.hand, "human"))
     except Exception as e:
         traceback.print_exc()
         raise
+
 
 env = gym.make('TexasHoldem-v2')
 

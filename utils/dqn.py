@@ -16,6 +16,7 @@ import json
 # Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
+
 class Memory:
     """
     This class provides an abstraction to store the [s, a, r, a'] elements of each iteration.
@@ -23,6 +24,7 @@ class Memory:
     that get returned as another list of dictionaries with each key corresponding to either
     "state", "action", "reward", "nextState" or "isFinal".
     """
+
     def __init__(self, size):
         self.size = size
         self.currentPosition = 0
@@ -74,7 +76,9 @@ class DeepQ(object):
         DQN:
             target = reward(s,a) + gamma * max(Q(s'))
     """
-    def __init__(self, inputs, outputs, memorySize, discountFactor, learningRate, learnStart, explorationRate, model_name_prefix):
+
+    def __init__(self, inputs, outputs, memorySize, discountFactor, learningRate, learnStart, explorationRate,
+                 model_name_prefix):
         """
         Parameters:
             - inputs: input size
@@ -140,7 +144,8 @@ class DeepQ(object):
         self.targetModel = load_model('model/' + self.model_name_prefix + '-dqn_target_model')
 
     def modelExisted(self):
-        if os.path.exists('model/' + self.model_name_prefix + '-dqn_model') and os.path.exists('model/' + self.model_name_prefix + '-dqn_target_model'):
+        if os.path.exists('model/' + self.model_name_prefix + '-dqn_model') and os.path.exists(
+                'model/' + self.model_name_prefix + '-dqn_target_model'):
             return True
         else:
             return False
@@ -233,22 +238,22 @@ class DeepQ(object):
             return self.model.fit(X_batch, Y_batch, batch_size=len(miniBatch), epochs=1, verbose=0)
 
 
-
-
 class DeepQTrain(DeepQ):
     def __init__(self, inputSize, outputSize, model_name_prefix):
-        
+
         self.stepCounter = 0
-        self.updateTargetNetworkCounter = 10000 # 10000
+        self.updateTargetNetworkCounter = 10000  # 10000
         explorationRate = 0.9
         self.minibatch_size = 128
         self.learnStart = 128
         learningRate = 0.00025
         discountFactor = 0.99
-        memorySize = 100000 # 1000000
+        memorySize = 100000  # 1000000
+
+        self.watchLoss = 1000  # 10000
 
         super(DeepQTrain, self).__init__(inputSize, outputSize, memorySize, discountFactor, learningRate, \
-            self.learnStart, explorationRate, model_name_prefix)
+                                         self.learnStart, explorationRate, model_name_prefix)
 
         if self.modelExisted():
             self.loadModel()
@@ -262,14 +267,14 @@ class DeepQTrain(DeepQ):
                 history = self.learnOnMiniBatch(self.minibatch_size, False)
                 # print "[INFO] Learn Start <= UpdateTargetNetwork"
 
-                if self.stepCounter % self.updateTargetNetworkCounter == 0 and history is not None:
-                    print('history: ', json.dumps(history.history)), ('stepCounter', self.stepCounter)
+                if self.stepCounter % self.watchLoss == 0 and history is not None:
+                    print('history: ', json.dumps(history.history))
 
             else:
                 history = self.learnOnMiniBatch(self.minibatch_size, True)
                 # print "[INFO] Learn Start > UpdateTargetNetwork"
-                if self.stepCounter % self.updateTargetNetworkCounter == 0 and history is not None:
-                    print('history: ', json.dumps(history.history)), ('stepCounter', self.stepCounter)
+                if self.stepCounter % self.watchLoss == 0 and history is not None:
+                    print('history: ', json.dumps(history.history))
 
     def _updateTargetNetwork(self):
         if self.stepCounter % self.updateTargetNetworkCounter == 0:
@@ -283,15 +288,15 @@ class DeepQTrain(DeepQ):
 
     def addMemoryUDQN(self, data):
         # action, reward, state, done
-        state, reward, done = data['state'], data['reward'], data['done']        
-        
+        state, reward, done = data['state'], data['reward'], data['done']
+
         if self.observation is None:
             self.observation = np.array(state)
         else:
             self.newObservation = np.array(state)
-   
+
             self.addMemory(self.observation, self.action, reward, \
-                self.newObservation, done)
+                           self.newObservation, done)
             self.observation = self.newObservation
 
             self._learnOnMinBatch()
@@ -299,7 +304,12 @@ class DeepQTrain(DeepQ):
             self._updateTargetNetwork()
 
         self.action = data['action']
-        
+
         if done:
             self._reset()
 
+    def addMemoryCdqn(self, state, action, reward, newState, isFinal):
+        self.addMemory(state, action, reward, newState, isFinal)
+        self._learnOnMinBatch()
+        self.stepCounter += 1
+        self._updateTargetNetwork()

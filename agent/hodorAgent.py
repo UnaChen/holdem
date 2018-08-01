@@ -100,3 +100,6 @@ class WinRateGambler():
             else:
                 avg_win = self.preflop_win_rate[str(player_amount)][number2 + number1 + shape]
         return avg_win
+
+    def _onTakeAction(self, state, newState, action, amount, done):
+        pass

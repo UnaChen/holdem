@@ -11,7 +11,7 @@ class CdqnModel:
     stateSize = 11  # [monteCarlo, playerCount, remainChips, investChips, pot, toCall, oneHotRound0, oneHotRound1, oneHotRound2, oneHotRound3, oneHotRound4]
     # actionTrain = {0: 'FOLD', 1: 'CHECK', 2: 'RAISE*1', 3: 'RAISE*2', 4: 'RAISE*4', 5: 'RAISE*8', \
     #                6: 'RAISE*16', 7: 'RAISE*32', 8: 'RAISE*48', 9: 'RAISE*64', 10: 'RAISE*100'}
-    actionTrain = {0: 'FOLD', 1: 'CHECK', 2: 'RAISE*1', 3: 'RAISE*2'}
+    actionTrain = {0: 'FOLD', 1: 'CHECK', 2: 'CALL', 3: 'RAISE*1', 4: 'RAISE*2'}
 
     def __init__(self, model_name_prefix="test", deep_q=None):
         # self.reload_left = 2
@@ -32,12 +32,7 @@ class CdqnModel:
         return
 
     def endCycle(self, states):
-        if states.player_states[self.playerid].playing_hand:
-            observation = self._getObservation(states)
-            stack = states.player_states[self.playerid].stack
-            betting = states.player_states[self.playerid].betting
-            reward = (stack - betting) / self.BB
-            self._addMemory(observation, None, reward, True)
+        pass
 
     def showAction(self, actions):
         pass
@@ -82,7 +77,6 @@ class CdqnModel:
         observation = self._getObservation(state)
         qValues = self.deepQ.getQValues(observation)
         actionID = self.deepQ.selectAction(qValues)
-        self._addMemory(observation, actionID, 0, False)
 
         actionName = self._transAction(state.community_state.to_call, actionID)
         if 'RAISE' in actionName:
@@ -94,13 +88,28 @@ class CdqnModel:
         else:
             return getattr(action_table, actionName), 0
 
+    def _onTakeAction(self, state, newState, action, amount, done):
+        observation = self._getObservation(state)
+        newObservation = self._getObservation(newState)
+
+        stack = state.player_states[self.playerid].stack
+        betting = state.player_states[self.playerid].betting
+
+        reward = 0
+        if done:
+            reward = (stack - betting) / self.BB
+
+        actionID = self._transActionToActionTrain(action, amount)
+
+        self._addMemory(state=observation, actionID=actionID, reward=reward, newState=newObservation, done=done)
+        pass
+
     def _getObservation(self, state):
         # [monteCarlo, remainChips, investChips, pot]        
         cards = [card_to_normal_str(c).upper() for c in state.player_states[self.playerid].hand]
         boards = [card_to_normal_str(c).upper() for c in state.community_card if c != -1]
 
         self.playerCount = len([p for p in state.player_states if p.playing_hand])
-        start = time.time()
         self.winRate = self.monteCarlo.calc_win_rate(cards, boards, self.playerCount, self.montecarloTimes)
 
         remainChips = state.player_states[self.playerid].stack / self.BB
@@ -113,11 +122,11 @@ class CdqnModel:
         state.extend(round)
 
         # print 'time_getObs', (time.time() - start), state, self.playerid
+        # print 'win rate: ', self.winRate, 'player count: ', self.playerCount, 'remain chips: ', remainChips, 'invest chips: ', investChips, 'pot: ', pot, 'tocall: ', toCallChips
         return np.array(state)
 
-    def _addMemory(self, state, actionID, reward, done):
-        data = {'state': state, 'action': actionID, 'reward': reward, 'done': done}
-        self.deepQ.addMemoryUDQN(data)
+    def _addMemory(self, state, actionID, reward, newState, done):
+        self.deepQ.addMemoryCdqn(state=state, action=actionID, reward=reward, newState=newState, isFinal=done)
 
     def _transAction(self, minBet, actionID):
         actionTrain = self.actionTrain[actionID]
@@ -130,6 +139,24 @@ class CdqnModel:
         #     print '***action:', actionTrain, '->', actionName, ', min:', minBet  # , ',cost:', cost
         return actionName
 
+    def _transActionToActionTrain(self, action, amount):
+        # map the action and amount to model defined action (actionTrain)
+        # transform action, amount to action id
+        actionID = 0
+        if action == action_table.CHECK:
+            actionID = 1
+        elif action == action_table.FOLD:
+            actionID = 0
+        elif action == action_table.CALL:
+            actionID = 2
+        else:
+            if amount > self.BB:
+                actionID = 4
+            else:
+                actionID = 3
+
+        return actionID
+
     def _toOneHotRound(self, round):
         if round == 0:
             return [1, 0, 0, 0, 0]
@@ -141,7 +168,6 @@ class CdqnModel:
             return [0, 0, 0, 1, 0]
         else:
             return [0, 0, 0, 0, 1]
-
 
 # observation, actionID, reward, newObservation, done
 # observation: 

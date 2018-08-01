@@ -127,6 +127,7 @@ def hand_to_str(hand, mode):
                 output += str(Card.int_to_pretty_str(c)) + ' '
     return output
 
+
 def safe_actions(cur_state, n_seats): #  play safe actions, check when no one else has raised, call when raised.
     current_player = cur_state.community_state.current_player
     to_call = cur_state.community_state.to_call
@@ -135,10 +136,12 @@ def safe_actions(cur_state, n_seats): #  play safe actions, check when no one el
         actions[current_player] = [action_table.CALL, action_table.NA]
     return actions
 
+
 def model_list_action(cur_state, n_seats, model_list):
     current_player = cur_state.community_state.current_player
     actions = [[action_table.CHECK, action_table.NA]] * n_seats
 
     model_decision = model_list[current_player].takeAction(cur_state, current_player)
     actions[current_player] = [model_decision.action, model_decision.amount]
-    return actions
+    return current_player, actions
+
