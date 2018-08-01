@@ -240,7 +240,7 @@ class DeepQTrain(DeepQ):
         
         self.stepCounter = 0
         self.updateTargetNetworkCounter = 10000 # 10000
-        explorationRate = 0.9
+        explorationRate = -1
         self.minibatch_size = 128
         self.learnStart = 128
         learningRate = 0.00025

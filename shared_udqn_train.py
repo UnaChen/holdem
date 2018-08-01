@@ -41,32 +41,38 @@ model_list = list()
 
 dqn_input_size = agent.UdqnModel.stateSize
 dqn_output_size = len(agent.UdqnModel.actionTrain)
-model_prefix_name = 'u'
-shared_deep_q = DeepQTrain(dqn_input_size, dqn_output_size, model_prefix_name)
+model_prefix_name_1000 = 'u1000'
+shared_deep_q_1000 = DeepQTrain(dqn_input_size, dqn_output_size, model_prefix_name_1000)
+model_prefix_name_2000 = 'u2000'
+shared_deep_q_2000 = DeepQTrain(dqn_input_size, dqn_output_size, model_prefix_name_2000)
+model_prefix_name_3000 = 'u3000'
+shared_deep_q_3000 = DeepQTrain(dqn_input_size, dqn_output_size, model_prefix_name_3000)
+model_prefix_name_4000 = 'u4000'
+shared_deep_q_4000 = DeepQTrain(dqn_input_size, dqn_output_size, model_prefix_name_4000)
 
 env.add_player(0, stack=3000)
-model_list.append(agent.UdqnModel(model_prefix_name, shared_deep_q))
+model_list.append(agent.UdqnModel("u1000", shared_deep_q_1000))
 
 env.add_player(1, stack=3000)
-model_list.append(agent.UdqnModel(model_prefix_name, shared_deep_q))
+model_list.append(agent.UdqnModel("u1000", shared_deep_q_1000))
 
 env.add_player(2, stack=3000)
-model_list.append(agent.UdqnModel(model_prefix_name, shared_deep_q))
+model_list.append(agent.UdqnModel("u2000", shared_deep_q_2000))
 
 env.add_player(3, stack=3000)
-model_list.append(agent.UdqnModel(model_prefix_name, shared_deep_q))
+model_list.append(agent.UdqnModel("u2000", shared_deep_q_2000))
 
 env.add_player(4, stack=3000)
-model_list.append(agent.UdqnModel(model_prefix_name, shared_deep_q))
+model_list.append(agent.UdqnModel("u3000", shared_deep_q_3000))
 
 env.add_player(5, stack=3000)
-model_list.append(agent.WinRateGambler())
+model_list.append(agent.UdqnModel("u3000", shared_deep_q_3000))
 
 env.add_player(6, stack=3000)
-model_list.append(agent.WinRateGambler())
+model_list.append(agent.UdqnModel("u4000", shared_deep_q_4000))
 
 env.add_player(7, stack=3000)
-model_list.append(agent.WinRateGambler())
+model_list.append(agent.UdqnModel("u4000", shared_deep_q_4000))
 
 env.add_player(8, stack=3000)
 model_list.append(agent.WinRateGambler())
@@ -87,8 +93,8 @@ try:
 
         env.reset()
         episode += 1
-        if episode % 1000 == 0:
-            shutil.copy('model/' + model_prefix_name + '-dqn_target_model', 
-                'model/' + model_prefix_name + '-dqn_target_model-' + str(episode))
+        # if episode % 1000 == 0:
+        #     shutil.copy('model/' + model_prefix_name + '-dqn_target_model', 
+        #         'model/' + model_prefix_name + '-dqn_target_model-' + str(episode))
 except Exception, e:
     print(e)

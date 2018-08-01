@@ -41,7 +41,7 @@ class UdqnModel():
             stack = states.player_states[self.playerid].stack
             betting = states.player_states[self.playerid].betting
             reward = (stack - betting) / self.BB
-            self._addMemory(observation, None, reward, True)
+            # self._addMemory(observation, None, reward, True)
 
     def showAction(self, actions):
         pass
@@ -86,7 +86,7 @@ class UdqnModel():
         observation = self._getObservation(state)
         qValues = self.deepQ.getQValues(observation)
         actionID = self.deepQ.selectAction(qValues)
-        self._addMemory(observation, actionID, 0, False)
+        # self._addMemory(observation, actionID, 0, False)
 
         actionName = self._transAction(state.community_state.to_call, actionID)
         if 'RAISE' in actionName:
