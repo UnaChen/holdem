@@ -26,7 +26,7 @@ from gym.utils import seeding
 from deuces import Card, Deck, Evaluator
 
 from .player import Player
-from .utils import hand_to_str, format_action, PLAYER_STATE, COMMUNITY_STATE, STATE
+from .utils import hand_to_str, format_action, PLAYER_STATE, COMMUNITY_STATE, STATE, action_table
 
 
 class TexasHoldemEnv(Env, utils.EzPickle):
@@ -42,7 +42,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
 
         self.n_seats = n_seats
 
-        self._cycle = 0
+        self.cycle = 0
         self._blind_index = 0
         [self._smallblind, self._bigblind] = TexasHoldemEnv.BLIND_INCREMENTS[0]
         self._deck = Deck()
@@ -50,6 +50,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
 
         self.community = []
         self._round = 0
+        self._roundBetCount = 0
         self._button = 0
         self._discard = []
 
@@ -60,13 +61,14 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         self._lastraise = 0
 
         # fill seats with dummy players
-        self._seats = [Player(i, stack=0, emptyplayer=True) for i in range(n_seats)]
+        self.seats = [Player(i, stack=0, emptyplayer=True) for i in range(n_seats)]
         self.emptyseats = n_seats
         self._player_dict = {}
         self._current_player = None
         self._debug = debug
         self._last_player = None
         self._last_actions = None
+        self._last_moved_actions = None
 
         self.observation_space = spaces.Tuple([
             spaces.Tuple([  # # **players info**
@@ -117,12 +119,13 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         self.episode_end = False
 
     def init(self):
-        self._cycle = 0
+        self.cycle = 0
         self._blind_index = 0
         [self._smallblind, self._bigblind] = TexasHoldemEnv.BLIND_INCREMENTS[0]
 
         self.community = []
         self._round = 0
+        self._roundBetCount = 0
         self._button = 0
         self._discard = []
 
@@ -135,6 +138,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         self._current_player = None
         self._last_player = None
         self._last_actions = None
+        self._last_moved_actions = None
 
         self.episode_end = False
         self.winning_players = []
@@ -145,8 +149,8 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         player_id = seat_id
         if player_id not in self._player_dict:
             new_player = Player(player_id, stack=stack, emptyplayer=False)
-            if self._seats[player_id].emptyplayer:
-                self._seats[player_id] = new_player
+            if self.seats[player_id].emptyplayer:
+                self.seats[player_id] = new_player
                 new_player.set_seat(player_id)
             else:
                 raise error.Error('Seat already taken.')
@@ -157,8 +161,8 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         """Remove a player from the environment seat."""
         player_id = seat_id
         try:
-            idx = self._seats.index(self._player_dict[player_id])
-            self._seats[idx] = Player(0, stack=0, emptyplayer=True)
+            idx = self.seats.index(self._player_dict[player_id])
+            self.seats[idx] = Player(0, stack=0, emptyplayer=True)
             del self._player_dict[player_id]
             self.emptyseats += 1
         except ValueError:
@@ -170,24 +174,25 @@ class TexasHoldemEnv(Env, utils.EzPickle):
 
     def reset(self):
         self.init()
-        for player in self._seats:
+        for player in self.seats:
             player.reset_stack()
             player.sitting_out = True
 
     def new_cycle(self):
         self._reset_game()
         self._ready_players()
-        self._cycle += 1
-        if self._cycle % self.n_seats == 0:
+        self.cycle += 1
+        if self.cycle % self.n_seats == 0:
             self._increment_blinds()
 
         [self._smallblind, self._bigblind] = TexasHoldemEnv.BLIND_INCREMENTS[self._blind_index]
 
-        alive_player = sum([1 if p.stack > 0 else 0 for p in self._seats])
-        if ((self.emptyseats < len(self._seats) - 1) and (alive_player > len(self._seats) // 2)):
-            players = [p for p in self._seats if p.playing_hand]
+        alive_player = sum([1 if p.stack > 0 else 0 for p in self.seats])
+        if ((self.emptyseats < len(self.seats) - 1) and (alive_player > len(self.seats) // 2)):
+            players = [p for p in self.seats if p.playing_hand]
             self._new_round()
             self._round = 0
+            self._roundBetCount = 0
             self._current_player = self._first_to_act(players)
             self._post_smallblind(self._current_player)
             self._current_player = self._next(players, self._current_player)
@@ -211,7 +216,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
             }
             RAISE_AMT = [0, minraise]
            """
-        if len(actions) != len(self._seats):
+        if len(actions) != len(self.seats):
             raise error.Error('actions must be same shape as number of seats.')
 
         if self._current_player is None:
@@ -220,22 +225,18 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         if self._round == 4:
             raise error.Error('Rounds already finished, needs to be reset.')
 
-        players = [p for p in self._seats if p.playing_hand]
-        if len(players) == 1:
-            # raise error.Error('Round cannot be played with one player.')
-            terminal = True
-            self._resolve_round(players)
-            return self._get_current_step_returns(terminal)
+        players = [p for p in self.seats if p.playing_hand]
 
         self._last_player = self._current_player
         self._last_actions = actions
+        self._last_moved_actions = [ a for a in actions ]
 
-        if self._current_player.isallin:
-            self._current_player = self._next(players, self._current_player)
-            return self._get_current_step_returns(False)
-
+        oriAction = actions[self._current_player.player_id]
         move = self._current_player.player_move(
-            self._output_state(self._current_player), actions[self._current_player.player_id])
+            self._output_state(self._current_player), oriAction)
+        newAction = (getattr(action_table(), move[0].upper()), move[1])
+        if (move != newAction):
+            self._last_moved_actions[self._current_player.player_id] = newAction
 
         if move[0] == 'call':
             self._player_bet(self._current_player, self._tocall - self._current_player.currentbet)
@@ -249,6 +250,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
             self._current_player = self._next(players, self._current_player)
         elif move[0] == 'raise':
             self._player_bet(self._current_player, move[1])
+            self._roundBetCount += 1
             if self._debug:
                 print('[DEBUG] Player', self._current_player.player_id, move)
             for p in players:
@@ -264,7 +266,15 @@ class TexasHoldemEnv(Env, utils.EzPickle):
             players.remove(folded_player)
             self._folded_players.append(folded_player)
 
-        if len([p for p in players if not p.isallin]) < 1 or len(players) <= 1:
+        # for record last action.currentbet
+        pid = self._last_player.player_id
+        if self._last_actions[pid][0] == action_table().CALL:
+            self._last_actions[pid] = (self._last_actions[pid][0], self._last_player.currentbet)
+        if self._last_moved_actions[pid][0] == action_table().CALL:
+            self._last_moved_actions[pid] = (self._last_moved_actions[pid][0], self._last_player.currentbet)    
+
+        playersNotAllin = [p for p in players if not p.isallin]
+        if (len(playersNotAllin) < 1) or (len(playersNotAllin) == 1 and playersNotAllin[0] == self._last_player)  or (len(players) <= 1):            
             while self._round < 4:
                 self._resolve(players)
         elif self._current_player.playedthisround:
@@ -274,14 +284,17 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         if self._round == 4:
             terminal = True
             self._resolve_round(players)
+            # traceback final state
+            self._current_player = self._last_player
         return self._get_current_step_returns(terminal)
 
     def render(self, mode='machine', close=False):
-        print('Cycle {}, Round {}, total pot: {} >>>'.format(self._cycle, self._round, self._totalpot))
+        print('Cycle {}, Round {}, RoundBetCount {}, total pot: {} >>>'.format(self.cycle, self._round, self._roundBetCount, self._totalpot))
         if self._last_actions is not None:
             pid = self._last_player.player_id
-            print('last action by player {}:'.format(pid) + '\t' + format_action(self._last_player,
-                                                                                 self._last_actions[pid]))
+            print('last action by player {}:'.format(pid) + '\t' + \
+                format_action(self._last_player, self._last_actions[pid]) + ' -> ' + \
+                format_action(self._last_player, self._last_moved_actions[pid]))
 
         state = self._get_current_state()
 
@@ -292,8 +305,10 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         print('players:')
         for idx, playerstate in enumerate(state.player_states):
             print(
-                '{}{}stack: {}'.format(idx, hand_to_str(playerstate.hand, mode),
-                                       self._seats[idx].stack))
+                '{}{}stack: {}\tplayed:{}\tnotJoin/folded:{}'.format(idx, hand_to_str(playerstate.hand, mode),
+                                       self.seats[idx].stack, 
+                                       1 if self.seats[idx].playedthisround else 0,
+                                       0 if self.seats[idx].playing_hand else 1))
         print("<<<")
 
     def _resolve(self, players):
@@ -351,10 +366,11 @@ class TexasHoldemEnv(Env, utils.EzPickle):
     def _first_to_act(self, players):
         if self._round == 0 and len(players) == 2:
             return self._next(sorted(
-                players + [self._seats[self._button]], key=lambda x: x.get_seat()),
-                self._seats[self._button])
+                players + [self.seats[self._button]], key=lambda x: x.get_seat()),
+                self.seats[self._button])
         try:
-            first = [player for player in players if player.get_seat() > self._button][0]
+            first = [player for player in players if (player.get_seat() > self._button) and \
+                (not player.isallin)][0]
         except IndexError:
             first = players[0]
         return first
@@ -362,10 +378,15 @@ class TexasHoldemEnv(Env, utils.EzPickle):
     def _next(self, players, current_player):
         ''' get next player '''
         idx = players.index(current_player)
-        return players[(idx + 1) % len(players)]
+        realIdx = idx
+        for i in range(1, len(players)):
+            realIdx = (idx+i) % len(players)
+            if not players[realIdx].isallin:
+                return players[realIdx]
+        return players[realIdx]
 
     def _deal(self):
-        for player in self._seats:
+        for player in self.seats:
             if player.playing_hand:
                 player.hand = self._deck.draw(2)
 
@@ -382,7 +403,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
         self.community.append(self._deck.draw(1))
 
     def _ready_players(self):
-        for p in self._seats:
+        for p in self.seats:
             if not p.emptyplayer and p.sitting_out:
                 p.sitting_out = False
                 p.playing_hand = True
@@ -419,9 +440,10 @@ class TexasHoldemEnv(Env, utils.EzPickle):
     def _new_round(self):
         for player in self._player_dict.values():
             player.currentbet = 0
-            player._roundRaiseCount = 0
+            player._roundRaiseCount = 0            
             player.playedthisround = False
         self._round += 1
+        self._roundBetCount = 0
         self._tocall = 0
         self._lastraise = 0
         self._roundpot = 0
@@ -460,24 +482,24 @@ class TexasHoldemEnv(Env, utils.EzPickle):
 
     def _reset_game(self):
         playing = 0
-        for player in self._seats:
+        for player in self.seats:
             if not player.emptyplayer and not player.sitting_out:
                 player.reset_hand()
                 playing += 1
         self.community = []
         self._current_sidepot = 0
         self._totalpot = 0
-        self._side_pots = [0] * len(self._seats)
+        self._side_pots = [0] * len(self.seats)
         self._deck.shuffle()
 
         if playing:
-            self._button = (self._button + 1) % len(self._seats)
-            while not self._seats[self._button].playing_hand:
-                self._button = (self._button + 1) % len(self._seats)
+            self._button = (self._button + 1) % len(self.seats)
+            while not self.seats[self._button].playing_hand:
+                self._button = (self._button + 1) % len(self.seats)
 
     def _output_state(self, current_player):
         return {
-            'players': [player.player_state() for player in self._seats],
+            'players': [player.player_state() for player in self.seats],
             'community': self.community,
             'my_seat': current_player.get_seat(),
             'pocket_cards': current_player.hand,
@@ -489,6 +511,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
             'player_id': current_player.player_id,
             'lastraise': self._lastraise,
             'minraise': max(self._bigblind, self._lastraise + self._tocall),
+            "roundbet_count": self._roundBetCount
         }
 
     def _pad(self, l, n, v):
@@ -498,7 +521,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
 
     def _get_current_state(self):
         player_states = []
-        for player in self._seats:
+        for player in self.seats:
             player_features = PLAYER_STATE(
                 int(player.emptyplayer),
                 int(player.get_seat()),
@@ -533,5 +556,5 @@ class TexasHoldemEnv(Env, utils.EzPickle):
     def _get_current_step_returns(self, terminal):
         obs = self._get_current_state()
         # TODO, make this something else?
-        rew = [player.stack for player in self._seats]
+        rew = [player.stack for player in self.seats]
         return obs, rew, terminal, []  # TODO, return some info?

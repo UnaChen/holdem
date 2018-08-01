@@ -75,7 +75,8 @@ def format_action(player, action):
             text = colored(text, 'white')
         return text
     if aid == action_table.CALL:
-        text = '- call, current bet: {}'.format(player.currentbet)
+        # text = '- call, current bet: {}'.format(player.currentbet)
+        text = '- call, current bet: {}'.format(raise_amt)
         if color:
             text = colored(text, 'yellow')
         return text
